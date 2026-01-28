@@ -1,2 +1,30 @@
+# Env
 .env
 backend/.env
+frontend/.env.local
+frontend/.env
+
+# Node
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Build
+build/
+dist/
+coverage/
+
+# Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+
+# Logs
+*.log
+
+# OS
+.DS_Store
