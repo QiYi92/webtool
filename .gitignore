@@ -1,5 +1,6 @@
 # Env
 .env
+.env.docker
 backend/.env
 frontend/.env.local
 frontend/.env

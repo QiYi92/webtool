@@ -22,3 +22,11 @@ DATABASE_URL = get_env("DATABASE_URL")
 JWT_SECRET = get_env("JWT_SECRET", "dev-secret-change-me")
 JWT_ALGORITHM = get_env("JWT_ALGORITHM", "HS256")
 JWT_EXPIRES_MINUTES = int(get_env("JWT_EXPIRES_MINUTES", "60"))
+
+# CORS：逗号分隔的来源列表，例如：
+# CORS_ALLOW_ORIGINS=https://example.com,https://www.example.com
+CORS_ALLOW_ORIGINS = [
+    origin.strip()
+    for origin in get_env("CORS_ALLOW_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]

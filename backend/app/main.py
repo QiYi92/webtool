@@ -9,6 +9,7 @@ from app.api.anime_guide import router as anime_guide_router
 from app.api.health import router as health_router
 from app.api.settings import router as settings_router
 from app.api.tools import router as tools_router
+from app.core.config import CORS_ALLOW_ORIGINS
 from app.services.anime_crawler.scheduler import shutdown_crawler_scheduler, start_on_startup
 
 logging.basicConfig(
@@ -21,7 +22,7 @@ app = FastAPI(title="galileocat-webtool")
 # 允许本地前端访问后端接口。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=CORS_ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
