@@ -125,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-100">
       <div className="flex min-h-screen w-full">
         <aside
-          className={`relative flex h-screen flex-col border-r border-slate-200 bg-slate-50 px-3 py-4 transition-all duration-200 ease-in-out ${
+          className={`sticky top-0 flex h-screen flex-col border-r border-slate-200 bg-slate-50 px-3 py-4 transition-all duration-200 ease-in-out ${
             collapsed ? "w-16" : "w-64"
           }`}
         >

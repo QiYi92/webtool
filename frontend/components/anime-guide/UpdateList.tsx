@@ -28,7 +28,7 @@ type UpdateListProps = {
 
 export function UpdateList({ dateString, items }: UpdateListProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm max-h-[calc(100vh-240px)]">
+    <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm max-h-[calc(100vh-400px)]">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm font-semibold text-slate-900">{dateString} 更新列表</div>
