@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.api.admin_users import router as admin_users_router
 from app.api.anime_guide import router as anime_guide_router
+from app.api.anime_crawler_logs import router as anime_crawler_logs_router
 from app.api.health import router as health_router
 from app.api.settings import router as settings_router
 from app.api.tools import router as tools_router
@@ -35,6 +36,7 @@ app.include_router(admin_users_router)
 app.include_router(settings_router)
 app.include_router(tools_router, prefix="/tools", tags=["tools"])
 app.include_router(anime_guide_router)
+app.include_router(anime_crawler_logs_router)
 
 
 @app.on_event("startup")

@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Home,
   KeyRound,
+  MonitorCog,
   User
 } from "lucide-react";
 
@@ -31,7 +32,11 @@ type NavItem = {
 
 type NavGroup = {
   title: string;
-  items: NavItem[];
+  items?: NavItem[];
+  sections?: Array<{
+    title: string;
+    items: NavItem[];
+  }>;
 };
 
 type UserInfo = {
@@ -52,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const map = new Map<string, string>([
       ["/", "主页"],
       ["/apps/anime-guide", "新番导视"],
+      ["/apps/console/anime-crawler", "新番爬虫控制台"],
       ["/settings/account", "账号信息修改"],
       ["/settings/password", "密码修改"],
       ["/settings/permissions", "权限组管理"]
@@ -80,8 +86,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       },
       {
         title: "应用",
-        items: [
-          { label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays }
+        sections: [
+          {
+            title: "工具",
+            items: [{ label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays }]
+          },
+          {
+            title: "控制台",
+            items: [
+              {
+                label: "新番爬虫控制台",
+                href: "/apps/console/anime-crawler",
+                icon: MonitorCog
+              }
+            ]
+          }
         ]
       },
       {
@@ -155,29 +174,63 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   {group.title}
                 </div>
-                <div className="space-y-1">
-                  {group.items.map((item) => {
-                    const active = pathname === item.href;
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.href}
-                        type="button"
-                        onClick={() => router.push(item.href)}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition ${
-                          active
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-600 hover:bg-white"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span className={`${collapsed ? "hidden" : "block"}`}>
-                          {item.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {group.items ? (
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const active = pathname === item.href;
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.href}
+                          type="button"
+                          onClick={() => router.push(item.href)}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition ${
+                            active
+                              ? "bg-white text-slate-900 shadow-sm"
+                              : "text-slate-600 hover:bg-white"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span className={`${collapsed ? "hidden" : "block"}`}>
+                            {item.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+                {group.sections?.map((section) => (
+                  <div key={`${group.title}-${section.title}`} className="space-y-1">
+                    <div
+                      className={`px-3 text-xs font-medium text-slate-400 transition-opacity ${
+                        collapsed ? "opacity-0" : "opacity-100"
+                      }`}
+                    >
+                      {section.title}
+                    </div>
+                    {section.items.map((item) => {
+                      const active = pathname === item.href;
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.href}
+                          type="button"
+                          onClick={() => router.push(item.href)}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition ${
+                            active
+                              ? "bg-white text-slate-900 shadow-sm"
+                              : "text-slate-600 hover:bg-white"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span className={`${collapsed ? "hidden" : "block"}`}>
+                            {item.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             ))}
           </nav>

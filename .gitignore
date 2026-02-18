@@ -26,6 +26,7 @@ __pycache__/
 
 # Logs
 *.log
+backend/logs/anime_crawler/*.txt
 
 # OS
 .DS_Store
