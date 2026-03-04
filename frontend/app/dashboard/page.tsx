@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type ToolsResponse = Record<string, unknown> | null;
 
@@ -19,6 +19,15 @@ export default function DashboardPage() {
     let active = true;
 
     const load = async () => {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        if (active) {
+          setError("Supabase config is missing");
+          setLoading(false);
+        }
+        return;
+      }
+
       const { data, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !data.session) {
@@ -60,6 +69,11 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleSignOut = async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      router.push("/login");
+      return;
+    }
     await supabase.auth.signOut();
     router.push("/login");
   };
