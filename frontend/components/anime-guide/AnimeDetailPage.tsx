@@ -98,7 +98,7 @@ export function AnimeDetailPage({ id }: { id: string }) {
               返回新番导视
             </Link>
           </Card>
-        ) : loading ? (
+        ) : loading || !detail ? (
           <Card className="p-6">
             <div className="text-sm text-slate-500">正在加载番剧信息...</div>
           </Card>
@@ -138,7 +138,7 @@ export function AnimeDetailPage({ id }: { id: string }) {
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <InfoRow label="中文名" value={detail.chineseTitle} />
                     <InfoRow label="话数" value={`${detail.totalEpisodes} 话`} />
-                    <InfoRow label="放送开始" value={detail.startDate} />
+                    <InfoRow label="放送开始" value={detail.startDate || "未知"} />
                     <InfoRow label="放送星期" value={detail.weekdayText} />
                   </div>
                 </Card>
