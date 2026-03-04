@@ -17,7 +17,19 @@ def get_latest_log_record(crawler_name: str = "anime_guide") -> dict | None:
                 id::text AS id,
                 crawler_name,
                 run_type,
-                status,
+                (
+                    CASE
+                        WHEN status::text = 'running'
+                             AND finished_at IS NULL
+                             AND started_at < (
+                                SELECT MAX(started_at)
+                                FROM crawler_run_logs
+                                WHERE crawler_name = :crawler_name
+                             )
+                        THEN 'interrupted'
+                        ELSE status::text
+                    END
+                ) AS status,
                 started_at,
                 finished_at,
                 duration_ms,
@@ -55,7 +67,19 @@ def list_log_records(
                 id::text AS id,
                 crawler_name,
                 run_type,
-                status,
+                (
+                    CASE
+                        WHEN status::text = 'running'
+                             AND finished_at IS NULL
+                             AND started_at < (
+                                SELECT MAX(started_at)
+                                FROM crawler_run_logs
+                                WHERE crawler_name = :crawler_name
+                             )
+                        THEN 'interrupted'
+                        ELSE status::text
+                    END
+                ) AS status,
                 started_at,
                 finished_at,
                 duration_ms,
@@ -87,7 +111,19 @@ def get_log_record_by_id(log_id: str, crawler_name: str = "anime_guide") -> dict
                 id::text AS id,
                 crawler_name,
                 run_type,
-                status,
+                (
+                    CASE
+                        WHEN status::text = 'running'
+                             AND finished_at IS NULL
+                             AND started_at < (
+                                SELECT MAX(started_at)
+                                FROM crawler_run_logs
+                                WHERE crawler_name = :crawler_name
+                             )
+                        THEN 'interrupted'
+                        ELSE status::text
+                    END
+                ) AS status,
                 started_at,
                 finished_at,
                 duration_ms,

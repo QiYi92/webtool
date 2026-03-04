@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 CrawlerRunType = Literal["manual", "scheduled", "autostart"]
-CrawlerRunStatus = Literal["running", "success", "failed"]
+CrawlerRunStatus = Literal["running", "success", "failed", "interrupted"]
 
 
 class CrawlerLogRecord(BaseModel):
@@ -35,4 +35,3 @@ class CrawlerLogListResponse(BaseModel):
     page: int
     page_size: int
     items: list[CrawlerLogRecord]
-

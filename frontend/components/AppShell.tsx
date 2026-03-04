@@ -91,16 +91,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             title: "工具",
             items: [{ label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays }]
           },
-          {
-            title: "控制台",
-            items: [
-              {
-                label: "新番爬虫控制台",
-                href: "/apps/console/anime-crawler",
-                icon: MonitorCog
-              }
-            ]
-          }
+          ...(user?.role_group === "admin"
+            ? [
+                {
+                  title: "控制台",
+                  items: [
+                    {
+                      label: "新番爬虫控制台",
+                      href: "/apps/console/anime-crawler",
+                      icon: MonitorCog
+                    }
+                  ]
+                }
+              ]
+            : [])
         ]
       },
       {

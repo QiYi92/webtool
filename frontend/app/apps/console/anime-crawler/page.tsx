@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
@@ -10,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fetchJSON } from "@/lib/api";
 
 type RunType = "manual" | "scheduled" | "autostart";
-type RunStatus = "running" | "success" | "failed";
+type RunStatus = "running" | "success" | "failed" | "interrupted";
 
 type CrawlerLogRecord = {
   id: string;
@@ -41,6 +42,10 @@ type LogListResponse = {
   items: CrawlerLogRecord[];
 };
 
+type MeResponse = {
+  role_group: string;
+};
+
 const PAGE_SIZE = 15;
 
 const RUN_TYPE_CN: Record<RunType, string> = {
@@ -51,6 +56,7 @@ const RUN_TYPE_CN: Record<RunType, string> = {
 
 const STATUS_CN: Record<RunStatus, string> = {
   running: "运行中",
+  interrupted: "运行中断",
   success: "成功",
   failed: "失败"
 };
@@ -73,6 +79,9 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 export default function AnimeCrawlerConsolePage() {
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [latest, setLatest] = useState<LatestLogResponse | null>(null);
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [listData, setListData] = useState<LogListResponse | null>(null);
@@ -85,6 +94,24 @@ export default function AnimeCrawlerConsolePage() {
     const total = listData?.total ?? 0;
     return Math.max(1, Math.ceil(total / PAGE_SIZE));
   }, [listData?.total]);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const me = await fetchJSON<MeResponse>("/me");
+        if (me.role_group !== "admin") {
+          router.replace("/");
+          return;
+        }
+        setAuthorized(true);
+      } catch {
+        router.replace("/");
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+    checkRole();
+  }, [router]);
 
   const loadLatest = useCallback(async () => {
     setLoadingLatest(true);
@@ -130,6 +157,9 @@ export default function AnimeCrawlerConsolePage() {
   }, []);
 
   useEffect(() => {
+    if (!authorized) {
+      return;
+    }
     const initialize = async () => {
       setError(null);
       try {
@@ -140,9 +170,12 @@ export default function AnimeCrawlerConsolePage() {
       }
     };
     initialize();
-  }, [loadLatest, loadList]);
+  }, [authorized, loadLatest, loadList]);
 
   useEffect(() => {
+    if (!authorized) {
+      return;
+    }
     if (page === 1) {
       return;
     }
@@ -156,7 +189,7 @@ export default function AnimeCrawlerConsolePage() {
       }
     };
     loadByPage();
-  }, [page, loadList]);
+  }, [authorized, page, loadList]);
 
   const handleRefresh = async () => {
     setError(null);
@@ -177,6 +210,10 @@ export default function AnimeCrawlerConsolePage() {
   };
 
   const displayRecord = latest?.record;
+
+  if (!authChecked || !authorized) {
+    return null;
+  }
 
   return (
     <AuthGuard>
