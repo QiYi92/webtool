@@ -14,6 +14,7 @@ def _detect_backend_root() -> Path:
 BACKEND_ROOT = _detect_backend_root()
 LOGS_ROOT = BACKEND_ROOT / "logs"
 MAX_TAIL_BYTES = 20 * 1024
+MISSING_LOG_WARNING = "日志文件不在本地或已清理"
 
 
 def get_latest_log_record(crawler_name: str = "anime_guide") -> dict | None:
@@ -176,12 +177,12 @@ def read_log_tail(
     try:
         safe_path = _resolve_log_file_path(log_path)
     except ValueError:
-        return "", False, 0, "log_path 非法，仅允许读取 backend/logs 目录"
+        return "", False, 0, MISSING_LOG_WARNING
 
     if not safe_path.exists():
-        return "", False, 0, f"日志文件不存在: {safe_path}"
+        return "", False, 0, MISSING_LOG_WARNING
     if not safe_path.is_file():
-        return "", False, 0, f"日志路径不是文件: {safe_path}"
+        return "", False, 0, MISSING_LOG_WARNING
 
     total_bytes = safe_path.stat().st_size
     read_size = min(max_bytes, total_bytes)
