@@ -89,6 +89,12 @@ FRONTEND_PUBLIC_ORIGIN=http://YOUR_SERVER_IP:3000
 
 ## 5. 启动服务
 
+先准备日志目录（宿主机）：
+
+```bash
+mkdir -p backend/logs/anime_crawler
+```
+
 ```bash
 docker compose --env-file .env.docker up -d --build
 ```
@@ -105,6 +111,12 @@ docker compose ps
 docker compose logs -f backend
 docker compose logs -f frontend
 ```
+
+日志说明：
+
+- 宿主机日志目录：`backend/logs/anime_crawler/`
+- 容器内日志目录：`/app/logs/anime_crawler/`
+- 两者已通过 `docker-compose` volume 挂载同步。
 
 ## 6. 访问与验证
 
@@ -148,9 +160,15 @@ docker compose restart frontend
 4. 登录失败但接口可通
 - 检查 `JWT_SECRET` 是否在不同环境下一致，避免签发与校验不一致。
 
+5. 日志列表有记录但日志框提示找不到文件
+- 这是多环境共用数据库时的常见现象（记录来自其他机器）。
+- 当前页面会提示“日志文件不在本地或已清理”。
+- 如需跨机器统一可读，建议改为对象存储（COS/S3/Supabase Storage）集中存放日志文件。
+
 ## 9. 生产建议
 
 - 当前为双端口直连模式（3000/8888）。生产建议使用 Nginx/Caddy 统一反向代理到 `80/443` 并开启 HTTPS。
 - 建议为 `JWT_SECRET` 使用 32 字节以上随机字符串。
 - 建议开启数据库最小权限或连接白名单，避免长期暴露高权限连接串。
 - 本项目后端包含定时抓取任务，建议保持单实例运行，避免重复抓取。
+- 新番爬虫每次运行完成后会自动清理 30 天前的运行日志记录与本地日志文件。

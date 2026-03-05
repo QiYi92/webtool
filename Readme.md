@@ -211,7 +211,32 @@ CORS_ALLOW_ORIGINS=http://localhost:3000
 
 ## 腾讯云服务器（4C4G）+ Docker 部署
 
-独立部署文档见：`docs/deployment/tencent-cloud-docker.md`
+推荐做法：`README` 只保留「部署速查」，完整步骤与排障放到独立子文档，便于长期维护。
+
+### 部署速查（生产）
+
+完整手册：`docs/deployment/tencent-cloud-docker.md`
+
+```bash
+# 1) 拉代码
+cd /opt/webtool
+git pull
+
+# 2) 确保日志目录存在（宿主机）
+mkdir -p backend/logs/anime_crawler
+
+# 3) 构建并启动
+docker compose --env-file .env.docker up -d --build
+
+# 4) 查看状态与日志
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+说明：
+- 后端日志目录已挂载：`/opt/webtool/backend/logs -> /app/logs`
+- 新番爬虫每次运行结束会自动清理 30 天前的运行日志记录与对应日志文件
 
 ---
 
