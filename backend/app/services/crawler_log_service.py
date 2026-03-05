@@ -2,8 +2,16 @@ from pathlib import Path
 
 from app.services.anime_crawler.db import fetch_all, fetch_one, get_conn
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
+def _detect_backend_root() -> Path:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if parent.name == "app":
+            return parent.parent
+    raise RuntimeError("Cannot locate backend root from current file path")
+
+
+BACKEND_ROOT = _detect_backend_root()
 LOGS_ROOT = BACKEND_ROOT / "logs"
 MAX_TAIL_BYTES = 20 * 1024
 
@@ -143,13 +151,17 @@ def get_log_record_by_id(log_id: str, crawler_name: str = "anime_guide") -> dict
 def _resolve_log_file_path(log_path: str) -> Path:
     path_obj = Path(log_path)
 
-    # 支持 "backend/logs/..." 与 "logs/..." 两种相对路径
+    # 兼容旧记录：
+    # - backend/logs/...
+    # - logs/...
+    # 并允许绝对路径，但必须落在 LOGS_ROOT 下。
     if path_obj.is_absolute():
         candidate = path_obj.resolve()
-    elif log_path.startswith("backend/"):
-        candidate = (REPO_ROOT / path_obj).resolve()
     else:
-        candidate = (BACKEND_ROOT / path_obj).resolve()
+        normalized = log_path
+        if normalized.startswith("backend/logs/"):
+            normalized = normalized[len("backend/") :]
+        candidate = (BACKEND_ROOT / normalized).resolve()
 
     logs_root = LOGS_ROOT.resolve()
     if candidate != logs_root and logs_root not in candidate.parents:

@@ -10,6 +10,8 @@ services:
       CORS_ALLOW_ORIGINS: ${FRONTEND_PUBLIC_ORIGIN:-http://localhost:3000}
     ports:
       - "8888:8888"
+    volumes:
+      - ./backend/logs:/app/logs
     healthcheck:
       test:
         [
@@ -35,4 +37,3 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
-

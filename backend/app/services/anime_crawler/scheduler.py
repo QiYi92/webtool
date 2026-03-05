@@ -12,14 +12,27 @@ from sqlalchemy import text
 from .calendar import crawl_bangumi_calendar
 from .episode import crawl_bangumi_episodes
 from .subject import crawl_bangumi_subject
-from .db import get_conn, fetch_one
+from .db import fetch_all, fetch_one, get_conn
 
 logger = logging.getLogger(__name__)
 
 _scheduler: Optional[BackgroundScheduler] = None
-BACKEND_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _detect_backend_root() -> Path:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if parent.name == "app":
+            return parent.parent
+    raise RuntimeError("Cannot locate backend root from current file path")
+
+
+BACKEND_ROOT = _detect_backend_root()
 RUN_LOG_DIR = BACKEND_ROOT / "logs" / "anime_crawler"
-RUN_LOG_PATH_PREFIX = "backend/logs/anime_crawler"
+# 统一存储相对路径，避免部署目录变化导致路径失效。
+RUN_LOG_PATH_PREFIX = "logs/anime_crawler"
+LOGS_ROOT = BACKEND_ROOT / "logs"
+LOG_RETENTION_DAYS = 30
 CrawlerRunType = Literal["manual", "scheduled", "autostart"]
 SKIP_REASON_LABELS: dict[str, str] = {
     "already_crawled_today": "今日已抓取",
@@ -38,6 +51,81 @@ def _ensure_run_log_dir() -> None:
 def _build_run_log_path(started_at: datetime) -> tuple[str, Path]:
     filename = started_at.strftime("%Y-%m-%d_%H%M%S_%f") + ".txt"
     return f"{RUN_LOG_PATH_PREFIX}/{filename}", RUN_LOG_DIR / filename
+
+
+def _resolve_log_file_path_for_cleanup(log_path: str) -> Path | None:
+    path_obj = Path(log_path)
+    if path_obj.is_absolute():
+        candidate = path_obj.resolve()
+    else:
+        normalized = log_path
+        if normalized.startswith("backend/logs/"):
+            normalized = normalized[len("backend/") :]
+        candidate = (BACKEND_ROOT / normalized).resolve()
+
+    logs_root = LOGS_ROOT.resolve()
+    if candidate == logs_root or logs_root in candidate.parents:
+        return candidate
+    return None
+
+
+def _cleanup_old_run_logs(
+    crawler_name: str = "anime_guide", retention_days: int = LOG_RETENTION_DAYS
+) -> None:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+    try:
+        with get_conn() as conn:
+            rows = fetch_all(
+                conn,
+                """
+                SELECT id::text AS id, log_path
+                FROM crawler_run_logs
+                WHERE crawler_name = :crawler_name
+                  AND COALESCE(finished_at, started_at) < :cutoff
+                ORDER BY started_at ASC;
+                """,
+                {"crawler_name": crawler_name, "cutoff": cutoff.isoformat()},
+            )
+            if not rows:
+                return
+
+            deleted_files = 0
+            skipped_paths = 0
+            for row in rows:
+                log_path = row.get("log_path")
+                if not log_path:
+                    continue
+                safe_path = _resolve_log_file_path_for_cleanup(str(log_path))
+                if not safe_path:
+                    skipped_paths += 1
+                    continue
+                try:
+                    if safe_path.exists() and safe_path.is_file():
+                        safe_path.unlink()
+                        deleted_files += 1
+                except Exception as file_exc:
+                    logger.warning("【清理】删除日志文件失败 path=%s err=%s", safe_path, file_exc)
+
+            deleted_rows = 0
+            for row in rows:
+                log_id = row.get("id")
+                if not log_id:
+                    continue
+                conn.execute(
+                    text("DELETE FROM crawler_run_logs WHERE id = CAST(:id AS uuid)"),
+                    {"id": log_id},
+                )
+                deleted_rows += 1
+
+        logger.info(
+            "【清理】已清理 %s 天前运行日志：记录=%s，文件=%s，非法路径跳过=%s",
+            retention_days,
+            deleted_rows,
+            deleted_files,
+            skipped_paths,
+        )
+    except Exception as exc:
+        logger.exception("【清理】历史日志清理失败：%s", exc)
 
 
 def _build_default_command(run_type: CrawlerRunType) -> str:
@@ -324,6 +412,7 @@ def run_crawler_once(
         crawler_root_logger = logging.getLogger("app.services.anime_crawler")
         crawler_root_logger.removeHandler(file_handler)
         file_handler.close()
+        _cleanup_old_run_logs(crawler_name="anime_guide", retention_days=LOG_RETENTION_DAYS)
 
 
 def start_crawler_scheduler() -> None:
