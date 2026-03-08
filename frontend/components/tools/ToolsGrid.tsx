@@ -126,6 +126,7 @@ export function ToolsGrid() {
         {tools.map((tool) => {
           const Icon = tool.icon;
           const isAnimeGuide = tool.key === "anime-guide";
+          const useGuideStyle = !tool.disabled;
           const card = (
             <Card
               className={cn(
@@ -140,10 +141,10 @@ export function ToolsGrid() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <CardTitle className={cn(isAnimeGuide ? "text-lg" : "text-base")}>
+                    <CardTitle className={cn(useGuideStyle ? "text-lg" : "text-base")}>
                       {tool.title}
                     </CardTitle>
-                    <CardDescription className={cn("mt-1", isAnimeGuide ? "text-sm" : "text-xs")}>
+                    <CardDescription className={cn("mt-1", useGuideStyle ? "text-sm" : "text-xs")}>
                       {tool.description}
                     </CardDescription>
                   </div>
@@ -174,7 +175,9 @@ export function ToolsGrid() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-400">点击进入</div>
+                  <div className={cn(useGuideStyle ? "text-sm text-slate-600" : "text-xs text-slate-400")}>
+                    点击进入
+                  </div>
                 )}
               </CardContent>
               {isAnimeGuide && (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -51,7 +52,7 @@ const PAGE_SIZE = 15;
 const RUN_TYPE_CN: Record<RunType, string> = {
   manual: "手动爬取",
   scheduled: "定时爬取",
-  autostart: "自启爬取"
+  autostart: "手动爬取"
 };
 
 const STATUS_CN: Record<RunStatus, string> = {
@@ -88,6 +89,8 @@ export default function AnimeCrawlerConsolePage() {
   const [page, setPage] = useState(1);
   const [loadingLatest, setLoadingLatest] = useState(true);
   const [loadingList, setLoadingList] = useState(true);
+  const [triggeringManual, setTriggeringManual] = useState(false);
+  const [showManualConfirm, setShowManualConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const totalPages = useMemo(() => {
@@ -201,6 +204,23 @@ export default function AnimeCrawlerConsolePage() {
     }
   };
 
+  const handleManualCrawl = async () => {
+    setTriggeringManual(true);
+    setError(null);
+    try {
+      await fetchJSON<{ ok: boolean; message: string }>("/tools/anime-crawler/run", {
+        method: "POST"
+      });
+      setShowManualConfirm(false);
+      await Promise.all([loadLatest(), loadList(page)]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "手动爬取启动失败";
+      setError(message);
+    } finally {
+      setTriggeringManual(false);
+    }
+  };
+
   const handlePrev = () => {
     setPage((prev) => Math.max(1, prev - 1));
   };
@@ -230,9 +250,17 @@ export default function AnimeCrawlerConsolePage() {
                 <CardTitle>日志总览</CardTitle>
                 <CardDescription>左侧最新日志内容，右侧历史日志索引。</CardDescription>
               </div>
-              <Button onClick={handleRefresh} disabled={loadingLatest || loadingList}>
-                刷新
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setShowManualConfirm(true)}
+                  disabled={loadingLatest || loadingList || triggeringManual}
+                >
+                  手动爬取
+                </Button>
+                <Button onClick={handleRefresh} disabled={loadingLatest || loadingList || triggeringManual}>
+                  刷新
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -327,6 +355,22 @@ export default function AnimeCrawlerConsolePage() {
             </div>
           </CardContent>
         </Card>
+        <AlertDialog open={showManualConfirm} onOpenChange={setShowManualConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>确认手动爬取？</AlertDialogTitle>
+              <AlertDialogDescription>
+                点击同意后将立即启动一次新番爬虫任务。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>取消</AlertDialogCancel>
+              <AlertDialogAction onClick={handleManualCrawl} disabled={triggeringManual}>
+                {triggeringManual ? "启动中..." : "同意"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </AppShell>
     </AuthGuard>
   );

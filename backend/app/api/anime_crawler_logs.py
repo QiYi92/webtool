@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
+from threading import Thread
 
 from app.core.security import get_current_user
 from app.schemas.crawler_log import (
@@ -7,6 +8,7 @@ from app.schemas.crawler_log import (
     CrawlerLogListResponse,
     CrawlerLogRecord,
 )
+from app.services.anime_crawler.scheduler import run_crawler_once
 from app.services.crawler_log_service import (
     get_log_record_by_id,
     get_latest_log_record,
@@ -87,3 +89,19 @@ def get_log_tail_by_id(
         total_bytes=total_bytes,
         warning=warning,
     )
+
+
+@router.post("/run")
+def trigger_manual_crawl(
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    _ensure_admin(current_user)
+    Thread(
+        target=run_crawler_once,
+        kwargs={
+            "run_type": "manual",
+            "command": "api: /tools/anime-crawler/run",
+        },
+        daemon=True,
+    ).start()
+    return {"ok": True, "message": "Manual crawl started"}

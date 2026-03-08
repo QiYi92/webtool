@@ -445,11 +445,3 @@ def shutdown_crawler_scheduler() -> None:
 
 def start_on_startup() -> None:
     start_crawler_scheduler()
-    Thread(
-        target=run_crawler_once,
-        kwargs={
-            "run_type": "autostart",
-            "command": "fastapi_startup: start_on_startup",
-        },
-        daemon=True,
-    ).start()

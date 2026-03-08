@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Calendar, Sparkles, Search, Wrench, ListChecks, Compass } from "lucide-react";
+import { Calendar, Sparkles, Search, Wrench, ListChecks, Compass, Workflow } from "lucide-react";
 
 export type ToolItem = {
   key: string;
@@ -17,6 +17,13 @@ export const tools: ToolItem[] = [
     description: "查看新番更新日历与详情",
     href: "/apps/anime-guide",
     icon: Calendar
+  },
+  {
+    key: "ai-workflow",
+    title: "AI工作流",
+    description: "进入 Dify 工作流窗口集合",
+    href: "/apps/ai-workflow",
+    icon: Workflow
   },
   {
     key: "tool-search",

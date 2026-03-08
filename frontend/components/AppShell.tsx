@@ -9,7 +9,8 @@ import {
   Home,
   KeyRound,
   MonitorCog,
-  User
+  User,
+  Workflow
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const pageTitle = useMemo(() => {
+    if (pathname.startsWith("/apps/ai-workflow")) {
+      return "AI工作流";
+    }
     const map = new Map<string, string>([
       ["/", "主页"],
       ["/apps/anime-guide", "新番导视"],
@@ -89,7 +93,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         sections: [
           {
             title: "工具",
-            items: [{ label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays }]
+            items: [
+              { label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays },
+              { label: "AI工作流", href: "/apps/ai-workflow", icon: Workflow }
+            ]
           },
           ...(user?.role_group === "admin"
             ? [
