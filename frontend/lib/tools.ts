@@ -1,5 +1,14 @@
 import type { LucideIcon } from "lucide-react";
-import { Calendar, Sparkles, Search, Wrench, ListChecks, Compass, Workflow } from "lucide-react";
+import {
+  Calendar,
+  Sparkles,
+  Search,
+  Wrench,
+  ListChecks,
+  Compass,
+  Workflow,
+  LineChart
+} from "lucide-react";
 
 export type ToolItem = {
   key: string;
@@ -24,6 +33,13 @@ export const tools: ToolItem[] = [
     description: "进入 Dify 工作流窗口集合",
     href: "/apps/ai-workflow",
     icon: Workflow
+  },
+  {
+    key: "invest-weather-station",
+    title: "投资气象站",
+    description: "追踪纳斯达克、标普500与黄金宏观指标",
+    href: "/apps/invest-weather-station",
+    icon: LineChart
   },
   {
     key: "tool-search",

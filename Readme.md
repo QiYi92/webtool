@@ -294,7 +294,7 @@ mkdir -p backend/logs/anime_crawler
 mkdir -p backend/logs/ai_workflow_sessions
 
 # 3) 构建并启动
-docker compose --env-file .env.docker up -d --build
+docker compose up -d --build
 
 # 4) 查看状态与日志
 docker compose ps
@@ -303,6 +303,7 @@ docker compose logs -f frontend
 ```
 
 说明：
+- `docker compose` 默认读取项目根目录 `.env`（无需 `--env-file`）
 - 后端日志目录已挂载：`/opt/webtool/backend/logs -> /app/logs`
 - 新番爬虫每次运行结束会自动清理 30 天前的运行日志记录与对应日志文件
 - 新番爬虫启动时仅注册定时任务（09:00 / 21:00），不再执行自启爬取

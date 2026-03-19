@@ -49,13 +49,13 @@ cd galileocat-webtool
 项目已提供模板文件：
 
 - `backend/.env.example`
-- `.env.docker.example`
+- `.env.example`
 
 复制并编辑：
 
 ```bash
 cp backend/.env.example backend/.env
-cp .env.docker.example .env.docker
+cp .env.example .env
 ```
 
 ### 4.1 `backend/.env`
@@ -75,7 +75,7 @@ JWT_EXPIRES_MINUTES=60
 CORS_ALLOW_ORIGINS=http://your-ip:3000,https://your-domain.com
 ```
 
-### 4.2 `.env.docker`
+### 4.2 `.env`
 
 ```env
 # 浏览器访问时调用的后端地址（构建前端时写入）
@@ -86,6 +86,7 @@ FRONTEND_PUBLIC_ORIGIN=http://YOUR_SERVER_IP:3000
 ```
 
 注意：`NEXT_PUBLIC_API_BASE_URL` 是前端构建参数，修改后需要重新 build 前端镜像。
+说明：`docker compose` 默认读取项目根目录 `.env`。
 
 ## 5. 启动服务
 
@@ -96,7 +97,7 @@ mkdir -p backend/logs/anime_crawler
 ```
 
 ```bash
-docker compose --env-file .env.docker up -d --build
+docker compose up -d --build
 ```
 
 查看状态：
@@ -136,7 +137,7 @@ docker compose logs -f frontend
 
 ```bash
 git pull
-docker compose --env-file .env.docker up -d --build
+docker compose up -d --build
 ```
 
 仅重启某个服务：

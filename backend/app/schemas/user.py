@@ -4,6 +4,14 @@ from pydantic import BaseModel, EmailStr
 class LoginRequest(BaseModel):
     identifier: str
     password: str
+    captcha_id: str
+    captcha_answer: str
+
+
+class CaptchaResponse(BaseModel):
+    captcha_id: str
+    image_data: str
+    expires_in_seconds: int
 
 
 class UserPublic(BaseModel):

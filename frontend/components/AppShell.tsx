@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Home,
   KeyRound,
+  LineChart,
   MonitorCog,
   User,
   Workflow
@@ -55,6 +56,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const pageTitle = useMemo(() => {
+    if (pathname.startsWith("/apps/invest-weather-station")) {
+      return "投资气象站";
+    }
     if (pathname.startsWith("/apps/ai-workflow")) {
       return "AI工作流";
     }
@@ -95,7 +99,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             title: "工具",
             items: [
               { label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays },
-              { label: "AI工作流", href: "/apps/ai-workflow", icon: Workflow }
+              { label: "AI工作流", href: "/apps/ai-workflow", icon: Workflow },
+              { label: "投资气象站", href: "/apps/invest-weather-station", icon: LineChart }
             ]
           },
           ...(user?.role_group === "admin"

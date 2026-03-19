@@ -20,6 +20,25 @@ type AnimeGuideDisplayItem = {
   title: string;
   coverUrl: string;
 };
+type InvestWeatherCard = {
+  name: string;
+  value: number | null;
+  unit: string;
+  secondaryValue: number | null;
+};
+type InvestWeatherApiResponse = {
+  sections?: Array<{
+    key: string;
+    cards?: InvestWeatherCard[];
+  }>;
+};
+type InvestWeatherDisplayItem = {
+  marketLabel: string;
+  name: string;
+  value: number | null;
+  unit: string;
+  secondaryValue: number | null;
+};
 
 const formatDateString = (date: Date) => {
   const year = date.getFullYear();
@@ -33,8 +52,12 @@ export function ToolsGrid() {
   const [todayAnimeItems, setTodayAnimeItems] = useState<AnimeGuideDisplayItem[]>([]);
   const [titleIndex, setTitleIndex] = useState(0);
   const [flipPhase, setFlipPhase] = useState<FlipPhase>("idle");
+  const [investItems, setInvestItems] = useState<InvestWeatherDisplayItem[]>([]);
+  const [investIndex, setInvestIndex] = useState(0);
+  const [investFlipPhase, setInvestFlipPhase] = useState<FlipPhase>("idle");
   const todayString = useMemo(() => formatDateString(new Date()), []);
   const currentAnime = todayAnimeItems[titleIndex];
+  const currentInvest = investItems[investIndex];
 
   useEffect(() => {
     const loadAnimeGuideCount = async () => {
@@ -104,11 +127,125 @@ export function ToolsGrid() {
     };
   }, [todayAnimeItems.length]);
 
+  useEffect(() => {
+    const loadInvestWeather = async () => {
+      try {
+        const [nasdaq, sp500, gold] = await Promise.all([
+          fetchJSON<InvestWeatherApiResponse>("/api/invest-weather/nasdaq"),
+          fetchJSON<InvestWeatherApiResponse>("/api/invest-weather/sp500"),
+          fetchJSON<InvestWeatherApiResponse>("/api/invest-weather/gold")
+        ]);
+
+        const toMarketItem = (
+          payload: InvestWeatherApiResponse,
+          marketLabel: string
+        ): InvestWeatherDisplayItem | null => {
+          const marketSection = (payload.sections || []).find((section) => section.key === "market");
+          const card = marketSection?.cards?.[0];
+          if (!card) return null;
+          return {
+            marketLabel,
+            name: card.name,
+            value: card.value,
+            unit: card.unit || "",
+            secondaryValue: card.secondaryValue
+          };
+        };
+
+        const items = [
+          toMarketItem(nasdaq, "纳斯达克"),
+          toMarketItem(sp500, "标普500"),
+          toMarketItem(gold, "黄金")
+        ].filter((item): item is InvestWeatherDisplayItem => item !== null);
+
+        setInvestItems(items);
+        setInvestIndex(0);
+        setInvestFlipPhase("idle");
+      } catch (error) {
+        setInvestItems([]);
+        setInvestIndex(0);
+        setInvestFlipPhase("idle");
+      }
+    };
+
+    loadInvestWeather();
+  }, []);
+
+  useEffect(() => {
+    if (investItems.length <= 1) {
+      setInvestFlipPhase("idle");
+      return;
+    }
+
+    let stopped = false;
+    let switchTimer: ReturnType<typeof setTimeout> | null = null;
+    let loopTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const schedule = () => {
+      loopTimer = setTimeout(() => {
+        if (stopped) return;
+        setInvestFlipPhase("leaving");
+
+        switchTimer = setTimeout(() => {
+          if (stopped) return;
+          setInvestIndex((prev) => (prev + 1) % investItems.length);
+          setInvestFlipPhase("entering");
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (!stopped) {
+                setInvestFlipPhase("idle");
+              }
+            });
+          });
+          schedule();
+        }, 360);
+      }, 4200);
+    };
+
+    schedule();
+
+    return () => {
+      stopped = true;
+      if (loopTimer) clearTimeout(loopTimer);
+      if (switchTimer) clearTimeout(switchTimer);
+    };
+  }, [investItems.length]);
+
+  const formatInvestValue = (value: number | null, unit: string) => {
+    if (value === null || Number.isNaN(value)) return "--";
+    const digits = Math.abs(value) >= 100 ? 2 : 3;
+    const formatted = value.toLocaleString("en-US", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    });
+    return `${formatted}${unit ? ` ${unit}` : ""}`;
+  };
+
+  const formatInvestChange = (value: number | null) => {
+    if (value === null || Number.isNaN(value)) return "--";
+    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+  };
+
+  const investChangeClass =
+    currentInvest?.secondaryValue === null || currentInvest?.secondaryValue === undefined
+      ? "text-slate-400"
+      : currentInvest.secondaryValue > 0
+        ? "text-emerald-600"
+        : currentInvest.secondaryValue < 0
+          ? "text-rose-600"
+          : "text-slate-500";
+
   const flipClassName = cn(
     "truncate transform-gpu text-base font-medium text-slate-700 transition-all duration-300 will-change-transform [backface-visibility:hidden]",
     flipPhase === "idle" && "translate-y-0 opacity-100 [transform:rotateX(0deg)]",
     flipPhase === "leaving" && "-translate-y-1 opacity-0 [transform:rotateX(68deg)]",
     flipPhase === "entering" && "translate-y-1 opacity-0 [transform:rotateX(-68deg)]"
+  );
+  const investFlipClassName = cn(
+    "truncate transform-gpu text-base font-medium text-slate-700 transition-all duration-300 will-change-transform [backface-visibility:hidden]",
+    investFlipPhase === "idle" && "translate-y-0 opacity-100 [transform:rotateX(0deg)]",
+    investFlipPhase === "leaving" && "-translate-y-1 opacity-0 [transform:rotateX(68deg)]",
+    investFlipPhase === "entering" && "translate-y-1 opacity-0 [transform:rotateX(-68deg)]"
   );
   const coverClassName = cn(
     "h-full w-full object-cover transition-opacity duration-500",
@@ -126,6 +263,7 @@ export function ToolsGrid() {
         {tools.map((tool) => {
           const Icon = tool.icon;
           const isAnimeGuide = tool.key === "anime-guide";
+          const isInvestWeather = tool.key === "invest-weather-station";
           const useGuideStyle = !tool.disabled;
           const card = (
             <Card
@@ -171,6 +309,27 @@ export function ToolsGrid() {
                         ) : (
                           <div className={flipClassName}>{currentAnime?.title}</div>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                ) : isInvestWeather ? (
+                  <div className="flex h-[72px] items-start">
+                    <div className="min-w-0 flex flex-1 flex-col gap-2">
+                      <div className="text-sm text-slate-600">行情速览</div>
+                      <div className="h-6 overflow-hidden [perspective:900px]">
+                        {investItems.length === 0 ? (
+                          <div className="text-sm text-slate-400">行情数据加载中...</div>
+                        ) : (
+                          <div className={investFlipClassName}>
+                            {currentInvest?.marketLabel} · {currentInvest?.name}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-slate-700">
+                        {formatInvestValue(currentInvest?.value ?? null, currentInvest?.unit ?? "")}
+                        <span className={cn("ml-2 font-semibold", investChangeClass)}>
+                          {formatInvestChange(currentInvest?.secondaryValue ?? null)}
+                        </span>
                       </div>
                     </div>
                   </div>
