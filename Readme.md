@@ -296,6 +296,7 @@ Authorization: Bearer <token>
 ### 前端（Next.js）
 
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8888
+FRED_API_KEY=YOUR_FRED_API_KEY
 
 ### 后端（FastAPI）
 

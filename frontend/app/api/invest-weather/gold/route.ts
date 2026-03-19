@@ -30,12 +30,40 @@ type CachedSnapshot = { fetchedAt: string; version?: number; payload: Payload };
 export const runtime = "nodejs";
 
 const SOURCE = "fred.stlouisfed.org/graph/fredgraph.csv";
+const FRED_API_SOURCE = "api.stlouisfed.org/fred/series/observations";
+const FRED_API_KEY = process.env.FRED_API_KEY?.trim();
 const CACHE_FILE = path.join(process.cwd(), ".cache", "invest-weather", "gold.json");
 const REFRESH_INTERVAL_MINUTES = 30;
 const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
 const CACHE_VERSION = 1;
 
 async function fetchSeries(id: string): Promise<Point[]> {
+  if (FRED_API_KEY) {
+    const params = new URLSearchParams({
+      series_id: id,
+      api_key: FRED_API_KEY,
+      file_type: "json",
+      sort_order: "asc"
+    });
+    const apiUrl = `https://${FRED_API_SOURCE}?${params.toString()}`;
+    const apiResponse = await fetch(apiUrl, { cache: "no-store" });
+    if (!apiResponse.ok) throw new Error(`Failed to fetch ${id} from FRED API: ${apiResponse.status}`);
+    const data = (await apiResponse.json()) as {
+      observations?: Array<{ date?: string; value?: string }>;
+    };
+    const observations = Array.isArray(data.observations) ? data.observations : [];
+    const points: Point[] = [];
+    for (const item of observations) {
+      const date = item.date;
+      const rawValue = item.value;
+      if (!date || !rawValue || rawValue === "." || rawValue.toLowerCase() === "nan") continue;
+      const value = Number(rawValue);
+      if (!Number.isFinite(value)) continue;
+      points.push({ date, value });
+    }
+    return points;
+  }
+
   const response = await fetch(`https://${SOURCE}?id=${id}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`Failed to fetch ${id}: ${response.status}`);
   const text = await response.text();
