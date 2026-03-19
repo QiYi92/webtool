@@ -130,10 +130,18 @@ export function ToolsGrid() {
   useEffect(() => {
     const loadInvestWeather = async () => {
       try {
+        const fetchLocalApi = async (url: string): Promise<InvestWeatherApiResponse> => {
+          const response = await fetch(url, { method: "GET" });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${url}`);
+          }
+          return (await response.json()) as InvestWeatherApiResponse;
+        };
+
         const [nasdaq, sp500, gold] = await Promise.all([
-          fetchJSON<InvestWeatherApiResponse>("/api/invest-weather/nasdaq"),
-          fetchJSON<InvestWeatherApiResponse>("/api/invest-weather/sp500"),
-          fetchJSON<InvestWeatherApiResponse>("/api/invest-weather/gold")
+          fetchLocalApi("/api/invest-weather/nasdaq"),
+          fetchLocalApi("/api/invest-weather/sp500"),
+          fetchLocalApi("/api/invest-weather/gold")
         ]);
 
         const toMarketItem = (
@@ -314,8 +322,8 @@ export function ToolsGrid() {
                   </div>
                 ) : isInvestWeather ? (
                   <div className="flex h-[72px] items-start">
-                    <div className="min-w-0 flex flex-1 flex-col gap-2">
-                      <div className="text-sm text-slate-600">行情速览</div>
+                    <div className="min-w-0 flex flex-1 flex-col justify-center gap-1">
+                      <div className="text-sm text-slate-600">实时指数速览</div>
                       <div className="h-6 overflow-hidden [perspective:900px]">
                         {investItems.length === 0 ? (
                           <div className="text-sm text-slate-400">行情数据加载中...</div>
