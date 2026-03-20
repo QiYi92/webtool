@@ -47,6 +47,8 @@ type CachedSnapshot = {
 };
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const SOURCE = "fred.stlouisfed.org/graph/fredgraph.csv";
 const FRED_API_SOURCE = "api.stlouisfed.org/fred/series/observations";
@@ -55,6 +57,17 @@ const CACHE_FILE = path.join(process.cwd(), ".cache", "invest-weather", "nasdaq.
 const REFRESH_INTERVAL_MINUTES = 30;
 const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
 const CACHE_VERSION = 5;
+let refreshPromise: Promise<void> | null = null;
+
+function jsonNoStore(body: unknown, init?: ResponseInit) {
+  return NextResponse.json(body, {
+    ...init,
+    headers: {
+      "Cache-Control": "no-store",
+      ...(init?.headers ?? {})
+    }
+  });
+}
 
 async function fetchSeries(id: string): Promise<Point[]> {
   if (FRED_API_KEY) {
@@ -317,6 +330,29 @@ async function readCache() {
 async function writeCache(data: CachedSnapshot) {
   await mkdir(path.dirname(CACHE_FILE), { recursive: true });
   await writeFile(CACHE_FILE, JSON.stringify(data), "utf8");
+}
+
+function isUsableCache(cached: CachedSnapshot | null): cached is CachedSnapshot {
+  return Boolean(cached && isCacheCompatible(cached) && hasCompleteMetadata(cached.payload));
+}
+
+function cacheResponse(
+  cached: CachedSnapshot,
+  options?: { stale?: boolean; refreshed?: boolean; refreshing?: boolean }
+) {
+  return jsonNoStore({
+    ...cached.payload,
+    lastUpdatedAt: cached.fetchedAt,
+    cache: {
+      hit: !options?.refreshed,
+      stale: options?.stale ?? false,
+      refreshed: options?.refreshed ?? false,
+      refreshing: options?.refreshing ?? false,
+      fetchedAt: cached.fetchedAt,
+      nextRefreshAt: getNextRefreshAt(cached.fetchedAt),
+      refreshIntervalMinutes: REFRESH_INTERVAL_MINUTES
+    }
+  });
 }
 
 function hasCompleteMetadata(payload: Payload) {
@@ -600,54 +636,49 @@ async function buildPayload(): Promise<Payload> {
   };
 }
 
+async function triggerRefresh() {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const payload = await buildPayload();
+      const fetchedAt = new Date().toISOString();
+      await writeCache({
+        fetchedAt,
+        version: CACHE_VERSION,
+        payload
+      });
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 export async function GET() {
   const cached = await readCache();
-  if (cached && isCacheCompatible(cached) && hasCompleteMetadata(cached.payload) && isCacheFresh(cached)) {
-    return NextResponse.json({
-      ...cached.payload,
-      lastUpdatedAt: cached.fetchedAt,
-      cache: {
-        hit: true,
-        fetchedAt: cached.fetchedAt,
-        nextRefreshAt: getNextRefreshAt(cached.fetchedAt),
-        refreshIntervalMinutes: REFRESH_INTERVAL_MINUTES
-      }
+  if (isUsableCache(cached) && isCacheFresh(cached)) {
+    return cacheResponse(cached);
+  }
+
+  if (isUsableCache(cached)) {
+    void triggerRefresh().catch((error) => {
+      console.error("[invest-weather:nasdaq] background refresh failed", error);
     });
+    return cacheResponse(cached, { stale: true, refreshing: true });
   }
 
   try {
-    const payload = await buildPayload();
-    const fetchedAt = new Date().toISOString();
-    await writeCache({
-      fetchedAt,
-      version: CACHE_VERSION,
-      payload
-    });
-    return NextResponse.json({
-      ...payload,
-      lastUpdatedAt: fetchedAt,
-      cache: {
-        hit: false,
-        fetchedAt,
-        nextRefreshAt: getNextRefreshAt(fetchedAt),
-        refreshIntervalMinutes: REFRESH_INTERVAL_MINUTES
-      }
-    });
-  } catch {
-    if (cached) {
-      return NextResponse.json({
-        ...cached.payload,
-        lastUpdatedAt: cached.fetchedAt,
-        cache: {
-          hit: true,
-          stale: true,
-          fetchedAt: cached.fetchedAt,
-          nextRefreshAt: getNextRefreshAt(cached.fetchedAt),
-          refreshIntervalMinutes: REFRESH_INTERVAL_MINUTES
-        }
-      });
+    await triggerRefresh();
+    const refreshed = await readCache();
+    if (isUsableCache(refreshed)) {
+      return cacheResponse(refreshed, { refreshed: true });
     }
-    return NextResponse.json(
+    return jsonNoStore(
+      { error: "Failed to fetch FRED data for nasdaq station" },
+      { status: 500 }
+    );
+  } catch (error) {
+    console.error("[invest-weather:nasdaq] refresh failed without cache", error);
+    return jsonNoStore(
       { error: "Failed to fetch FRED data for nasdaq station" },
       { status: 500 }
     );
