@@ -37,7 +37,7 @@ export const tools: ToolItem[] = [
   {
     key: "invest-weather-station",
     title: "投资气象站",
-    description: "追踪纳斯达克、标普500与黄金宏观指标",
+    description: "追踪纳斯达克、标普500、黄金与 CS2 饰品指标",
     href: "/apps/invest-weather-station",
     icon: LineChart
   },
