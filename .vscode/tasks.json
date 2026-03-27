@@ -8,17 +8,26 @@
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
       "isBackground": true,
       "problemMatcher": {
+        "owner": "custom",
         "pattern": [
           {
-            "regexp": ".*"
+            "regexp": "^(.*)$",
+            "kind": "file",
+            "file": 1,
+            "message": 1
           }
         ],
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "ready - started server on",
-          "endsPattern": "ready - started server on"
+          "beginsPattern": "Starting|ready - started server on|▲ Next\\.js",
+          "endsPattern": "Ready in|ready - started server on"
         }
       }
     },
@@ -33,11 +42,20 @@
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      },
       "isBackground": true,
       "problemMatcher": {
+        "owner": "custom",
         "pattern": [
           {
-            "regexp": ".*"
+            "regexp": "^(.*)$",
+            "kind": "file",
+            "file": 1,
+            "message": 1
           }
         ],
         "background": {
@@ -54,6 +72,10 @@
         "dev:frontend",
         "dev:backend"
       ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "group": {
         "kind": "build",
         "isDefault": true

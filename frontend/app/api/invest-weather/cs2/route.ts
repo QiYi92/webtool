@@ -32,6 +32,8 @@ type RankingItem = {
   changeValue: number | null;
   level: number | null;
   type: string | null;
+  typeVal: string | null;
+  trendList: Point[];
 };
 
 type BoardSection = {
@@ -95,13 +97,23 @@ type BlockSummaryResponse = {
   >;
 };
 
+type BlockRelationResponse = {
+  success: boolean;
+  data?: RelationItem[];
+};
+
 type BlockItem = {
   type?: string;
   name?: string;
   level?: number;
+  typeVal?: string;
   index?: number;
   riseFallRate?: number;
   riseFallDiff?: number;
+};
+
+type RelationItem = BlockItem & {
+  trendList?: Array<[number | string, number | string]>;
 };
 
 export const runtime = "nodejs";
@@ -115,6 +127,7 @@ const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
 const CACHE_VERSION = 1;
 const FETCH_TIMEOUT_MS = 5000;
 const CURL_TIMEOUT_SECONDS = 8;
+const RELATION_FETCH_TIMEOUT_MS = 2500;
 const REQUEST_HEADERS = {
   Accept: "application/json",
   "User-Agent":
@@ -133,8 +146,8 @@ function jsonNoStore(body: unknown, init?: ResponseInit) {
   });
 }
 
-async function curlJson<T>(url: string): Promise<T> {
-  const { stdout } = await execFileAsync("curl", [
+async function curlJson<T>(url: string, init?: { method?: "GET" | "POST"; body?: unknown }): Promise<T> {
+  const args = [
     "--silent",
     "--show-error",
     "--location",
@@ -147,17 +160,33 @@ async function curlJson<T>(url: string): Promise<T> {
     `Accept: ${REQUEST_HEADERS.Accept}`,
     "--header",
     `User-Agent: ${REQUEST_HEADERS["User-Agent"]}`,
+    ...(init?.method ? ["--request", init.method] : []),
+    ...(init?.body !== undefined
+      ? ["--header", "Content-Type: application/json", "--data", JSON.stringify(init.body)]
+      : []),
     url
-  ]);
+  ];
+  const { stdout } = await execFileAsync("curl", args);
   return JSON.parse(stdout) as T;
 }
 
-async function fetchJson<T>(pathname: string): Promise<T> {
+async function fetchJson<T>(
+  pathname: string,
+  init?: {
+    method?: "GET" | "POST";
+    body?: unknown;
+  }
+): Promise<T> {
   const url = `${API_BASE}${pathname}`;
   try {
     const response = await fetch(url, {
       cache: "no-store",
-      headers: REQUEST_HEADERS,
+      headers: {
+        ...REQUEST_HEADERS,
+        ...(init?.body !== undefined ? { "Content-Type": "application/json" } : {})
+      },
+      method: init?.method ?? "GET",
+      body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     });
     if (!response.ok) {
@@ -166,7 +195,7 @@ async function fetchJson<T>(pathname: string): Promise<T> {
     return (await response.json()) as T;
   } catch (error) {
     console.warn(`[invest-weather:cs2] fetch fallback to curl for ${pathname}`, error);
-    return curlJson<T>(url);
+    return curlJson<T>(url, init);
   }
 }
 
@@ -268,8 +297,29 @@ function normalizeBoardItem(item: BlockItem): RankingItem {
     changeRate: toNumber(item.riseFallRate),
     changeValue: toNumber(item.riseFallDiff),
     level: typeof item.level === "number" ? item.level : null,
-    type: item.type ?? null
+    type: item.type ?? null,
+    typeVal: item.typeVal ?? null,
+    trendList: []
   };
+}
+
+function normalizeTrendList(trendList: RelationItem["trendList"]) {
+  return pointsFromPairs(trendList, "datetime");
+}
+
+function mapTrendListByTypeVal(items: RelationItem[] | undefined) {
+  return new Map(
+    (items ?? [])
+      .filter((item) => typeof item.typeVal === "string" && item.typeVal.length > 0)
+      .map((item) => [item.typeVal as string, normalizeTrendList(item.trendList)])
+  );
+}
+
+function attachTrendLists(items: RankingItem[], trendMap: Map<string, Point[]>) {
+  return items.map((item) => ({
+    ...item,
+    trendList: item.typeVal ? trendMap.get(item.typeVal) ?? [] : []
+  }));
 }
 
 function boardTitle(key: string) {
@@ -311,6 +361,10 @@ function hasCompleteMetadata(payload: Payload) {
 
 function isCacheCompatible(cached: CachedSnapshot) {
   return (cached.version ?? 1) >= CACHE_VERSION;
+}
+
+function isRenderableCache(cached: CachedSnapshot | null): cached is CachedSnapshot {
+  return Boolean(cached && hasCompleteMetadata(cached.payload));
 }
 
 function isUsableCache(cached: CachedSnapshot | null): cached is CachedSnapshot {
@@ -468,7 +522,7 @@ async function buildPayload(): Promise<Payload> {
     })
   ];
 
-  const boards: BoardSection[] = Object.entries(blockResponse.data)
+  const baseBoards: BoardSection[] = Object.entries(blockResponse.data)
     .map(([key, value]) => {
       const meta = boardTitle(key);
       return {
@@ -481,6 +535,95 @@ async function buildPayload(): Promise<Payload> {
       } satisfies BoardSection;
     })
     .filter((section) => section.defaultList.length > 0 || section.topList.length > 0 || section.bottomList.length > 0);
+
+  const hotSeed = baseBoards.find((board) => board.key === "hot")?.defaultList[0]?.typeVal;
+  const level1Seed = baseBoards.find((board) => board.key === "itemTypeLevel1")?.defaultList[0]?.typeVal;
+
+  const fetchRelation = async (
+    label: "hot" | "level1",
+    body:
+      | {
+          type: "HOT";
+          level: 0;
+          platform: "ALL";
+          typeVal: string;
+          typeDay: "1";
+        }
+      | {
+          type: "ITEM_TYPE";
+          level: 1;
+          platform: "ALL";
+          typeVal: string;
+          typeDay: "1";
+        }
+  ) => {
+    try {
+      return await Promise.race([
+        fetchJson<BlockRelationResponse>("/user/item/block/v1/relation", {
+          method: "POST",
+          body
+        }),
+        new Promise<null>((resolve) => {
+          setTimeout(() => resolve(null), RELATION_FETCH_TIMEOUT_MS);
+        })
+      ]);
+    } catch (error) {
+      console.warn(`[invest-weather:cs2] failed to fetch ${label} relation trend list`, error);
+      return null;
+    }
+  };
+
+  const [hotRelationResponse, level1RelationResponse] = await Promise.all([
+    hotSeed
+      ? fetchRelation("hot", {
+          type: "HOT",
+          level: 0,
+          platform: "ALL",
+          typeVal: hotSeed,
+          typeDay: "1"
+        })
+      : Promise.resolve(null),
+    level1Seed
+      ? fetchRelation("level1", {
+          type: "ITEM_TYPE",
+          level: 1,
+          platform: "ALL",
+          typeVal: level1Seed,
+          typeDay: "1"
+        })
+      : Promise.resolve(null)
+  ]);
+
+  const hotTrendMap =
+    hotRelationResponse?.success && hotRelationResponse.data
+      ? mapTrendListByTypeVal(hotRelationResponse.data)
+      : new Map<string, Point[]>();
+  const level1TrendMap =
+    level1RelationResponse?.success && level1RelationResponse.data
+      ? mapTrendListByTypeVal(level1RelationResponse.data)
+      : new Map<string, Point[]>();
+
+  const boards = baseBoards.map((board) => {
+    if (board.key === "hot") {
+      return {
+        ...board,
+        defaultList: attachTrendLists(board.defaultList, hotTrendMap),
+        topList: attachTrendLists(board.topList, hotTrendMap),
+        bottomList: attachTrendLists(board.bottomList, hotTrendMap)
+      } satisfies BoardSection;
+    }
+
+    if (board.key === "itemTypeLevel1") {
+      return {
+        ...board,
+        defaultList: attachTrendLists(board.defaultList, level1TrendMap),
+        topList: attachTrendLists(board.topList, level1TrendMap),
+        bottomList: attachTrendLists(board.bottomList, level1TrendMap)
+      } satisfies BoardSection;
+    }
+
+    return board;
+  });
 
   return {
     source: API_BASE,
@@ -515,7 +658,7 @@ export async function GET() {
     return cacheResponse(cached);
   }
 
-  if (isUsableCache(cached)) {
+  if (isRenderableCache(cached)) {
     void triggerRefresh().catch((error) => {
       console.error("[invest-weather:cs2] background refresh failed", error);
     });

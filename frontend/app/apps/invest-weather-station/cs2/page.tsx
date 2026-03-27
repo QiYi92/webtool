@@ -46,6 +46,8 @@ type RankingItem = {
   changeValue: number | null;
   level: number | null;
   type: string | null;
+  typeVal?: string | null;
+  trendList?: HistoryItem[] | null;
 };
 
 type BoardSection = {
@@ -69,6 +71,47 @@ type Cs2WeatherResponse = {
     cards: DashboardCard[];
   }>;
   boards: BoardSection[];
+};
+
+type BlockDetailResponse = {
+  name: string;
+  type: string;
+  typeVal: string;
+  level: number;
+  currentIndex: number | null;
+  yesterdayIndex: number | null;
+  highIndex: number | null;
+  lowIndex: number | null;
+  riseFallDiff: number | null;
+  riseFallRate: number | null;
+  updateTime: string | null;
+  priceHistory: HistoryItem[];
+  sellCountHistory: HistoryItem[];
+  components: Array<{
+    name: string;
+    imageUrl: string;
+    marketHashName: string;
+    price: number | null;
+    priceDiff: number | null;
+    priceRate: number | null;
+  }>;
+  componentsUp?: Array<{
+    name: string;
+    imageUrl: string;
+    marketHashName: string;
+    price: number | null;
+    priceDiff: number | null;
+    priceRate: number | null;
+  }>;
+  componentsDown?: Array<{
+    name: string;
+    imageUrl: string;
+    marketHashName: string;
+    price: number | null;
+    priceDiff: number | null;
+    priceRate: number | null;
+  }>;
+  trendSourceAvailable: boolean;
 };
 
 const statusColorMap: Record<string, string> = {
@@ -363,6 +406,137 @@ function DetailedChart({
   );
 }
 
+function BlockTrendChart({
+  priceHistory
+}: {
+  priceHistory: HistoryItem[];
+}) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const WIDTH = 920;
+  const HEIGHT = 360;
+  const MARGIN = { top: 16, right: 16, bottom: 34, left: 72 };
+  const PLOT_WIDTH = WIDTH - MARGIN.left - MARGIN.right;
+  const PLOT_HEIGHT = HEIGHT - MARGIN.top - MARGIN.bottom;
+
+  const priceValues = priceHistory.map((item) => item.value);
+  const priceMin = priceValues.length ? Math.min(...priceValues) : 0;
+  const priceMax = priceValues.length ? Math.max(...priceValues) : 1;
+  const priceRange = priceMax - priceMin || 1;
+
+  const toPoints = (history: HistoryItem[], min: number, range: number) =>
+    history
+      .map((item, index) => {
+        const x = MARGIN.left + (index / Math.max(history.length - 1, 1)) * PLOT_WIDTH;
+        const y = MARGIN.top + PLOT_HEIGHT - ((item.value - min) / range) * PLOT_HEIGHT;
+        return `${x},${y}`;
+      })
+      .join(" ");
+
+  const xTicks = Array.from({ length: Math.min(6, priceHistory.length) }, (_, idx) => {
+    const index = Math.round((idx * Math.max(priceHistory.length - 1, 0)) / Math.max(Math.min(6, priceHistory.length) - 1, 1));
+    const point = priceHistory[index];
+    return {
+      x: MARGIN.left + (index / Math.max(priceHistory.length - 1, 1)) * PLOT_WIDTH,
+      label: point ? formatDate(point.date) : ""
+    };
+  });
+
+  const leftTicks = Array.from({ length: 5 }, (_, idx) => priceMax - (idx * (priceMax - priceMin)) / 4);
+  const hoverPoint =
+    hoverIndex !== null && priceHistory[hoverIndex]
+      ? {
+          x: MARGIN.left + (hoverIndex / Math.max(priceHistory.length - 1, 1)) * PLOT_WIDTH,
+          y: MARGIN.top + PLOT_HEIGHT - ((priceHistory[hoverIndex].value - priceMin) / priceRange) * PLOT_HEIGHT
+        }
+      : null;
+  const hoverData = hoverIndex !== null ? priceHistory[hoverIndex] ?? null : null;
+
+  const onMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current || priceHistory.length < 2) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const ratio = Math.min(1, Math.max(0, (x - MARGIN.left) / PLOT_WIDTH));
+    setHoverIndex(Math.round(ratio * (priceHistory.length - 1)));
+  };
+
+  if (priceHistory.length < 2) {
+    return (
+      <div className="flex h-80 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400">
+        暂无板块走势数据
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
+        <span className="inline-flex items-center gap-2 text-orange-500">
+          <span className="h-2.5 w-2.5 rounded-full bg-orange-400" />
+          价格
+        </span>
+      </div>
+      <div
+        ref={containerRef}
+        className="relative h-80 w-full overflow-hidden"
+        onMouseMove={onMouseMove}
+        onMouseLeave={() => setHoverIndex(null)}
+      >
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-full w-full">
+          {leftTicks.map((tick, idx) => {
+            const y = MARGIN.top + (idx * PLOT_HEIGHT) / Math.max(leftTicks.length - 1, 1);
+            return (
+              <g key={`left-${tick}-${idx}`}>
+                <line x1={MARGIN.left} y1={y} x2={WIDTH - MARGIN.right} y2={y} className="stroke-slate-200" />
+                <text x={MARGIN.left - 8} y={y + 4} textAnchor="end" className="fill-slate-400 text-[11px]">
+                  {fmtNum(tick)}
+                </text>
+              </g>
+            );
+          })}
+          {xTicks.map((tick, idx) => (
+            <g key={`x-${tick.label}-${idx}`}>
+              <line x1={tick.x} y1={MARGIN.top} x2={tick.x} y2={HEIGHT - MARGIN.bottom} className="stroke-slate-200" strokeDasharray="3 4" />
+              <text x={tick.x} y={HEIGHT - 8} textAnchor="middle" className="fill-slate-400 text-[11px]">
+                {tick.label}
+              </text>
+            </g>
+          ))}
+          <line x1={MARGIN.left} y1={MARGIN.top} x2={MARGIN.left} y2={HEIGHT - MARGIN.bottom} className="stroke-slate-300" />
+          <line x1={MARGIN.left} y1={HEIGHT - MARGIN.bottom} x2={WIDTH - MARGIN.right} y2={HEIGHT - MARGIN.bottom} className="stroke-slate-300" />
+          <polyline
+            points={toPoints(priceHistory, priceMin, priceRange)}
+            fill="none"
+            className="stroke-orange-400"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {hoverPoint ? (
+            <>
+              <line
+                x1={hoverPoint.x}
+                y1={MARGIN.top}
+                x2={hoverPoint.x}
+                y2={HEIGHT - MARGIN.bottom}
+                className="stroke-slate-400"
+                strokeWidth="1.5"
+              />
+              <circle cx={hoverPoint.x} cy={hoverPoint.y} r="5" className="fill-white stroke-orange-500" strokeWidth="2.5" />
+            </>
+          ) : null}
+        </svg>
+        {hoverPoint && hoverData ? (
+          <div className="pointer-events-none absolute right-4 top-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-lg">
+            <p className="text-lg font-semibold text-slate-900">{formatDate(hoverData.date)}</p>
+            <p className="mt-1 text-2xl font-semibold text-slate-700">{fmtNum(hoverData.value)}</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function DashboardIndicatorCard({
   card,
   onOpenChart
@@ -443,11 +617,13 @@ function DashboardIndicatorCard({
 function RankingTable({
   title,
   items,
-  tone
+  tone,
+  onSelectItem
 }: {
   title: string;
   items: RankingItem[];
   tone: "neutral" | "up" | "down";
+  onSelectItem?: (item: RankingItem) => void;
 }) {
   const valueClass =
     tone === "up" ? "text-rose-500" : tone === "down" ? "text-emerald-500" : "text-slate-700";
@@ -462,25 +638,40 @@ function RankingTable({
       </div>
       <div className="space-y-3">
         {items.map((item, index) => (
-          <div key={`${title}-${item.name}-${index}`} className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+          <button
+            key={`${title}-${item.name}-${index}`}
+            type="button"
+            disabled={!onSelectItem}
+            onClick={() => onSelectItem?.(item)}
+            className={`flex w-full items-start justify-between gap-4 border-b border-slate-100 pb-3 text-left last:border-b-0 last:pb-0 ${
+              onSelectItem ? "rounded-lg transition hover:bg-slate-50" : ""
+            }`}
+          >
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-400">#{index + 1}</p>
               <p className="mt-1 text-base font-semibold text-slate-900">{item.name}</p>
               <p className="mt-1 text-sm text-slate-500">
                 指数 {fmtNum(item.value)} · 变动值 {fmtNum(item.changeValue)}
               </p>
+              {onSelectItem ? <p className="mt-2 text-xs font-medium text-indigo-500">点击查看板块详情</p> : null}
             </div>
             <div className={`shrink-0 text-right text-lg font-semibold ${valueClass}`}>
               {formatChange(item.changeRate)}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-function BoardSectionPanel({ board }: { board: BoardSection }) {
+function BoardSectionPanel({
+  board,
+  onSelectItem
+}: {
+  board: BoardSection;
+  onSelectItem?: (item: RankingItem) => void;
+}) {
   return (
     <section className="space-y-5">
       <div>
@@ -488,11 +679,68 @@ function BoardSectionPanel({ board }: { board: BoardSection }) {
         <p className="mt-1 text-sm text-slate-500">{board.subtitle}</p>
       </div>
       <div className="grid gap-6 xl:grid-cols-3">
-        <RankingTable title="默认排行" items={board.defaultList} tone="neutral" />
-        <RankingTable title="上涨排行" items={board.topList} tone="up" />
-        <RankingTable title="下跌排行" items={board.bottomList} tone="down" />
+        <RankingTable title="默认排行" items={board.defaultList} tone="neutral" onSelectItem={onSelectItem} />
+        <RankingTable title="上涨排行" items={board.topList} tone="up" onSelectItem={onSelectItem} />
+        <RankingTable title="下跌排行" items={board.bottomList} tone="down" onSelectItem={onSelectItem} />
       </div>
     </section>
+  );
+}
+
+function BoardDetailLoadingState() {
+  return (
+    <div className="space-y-5 px-6 py-6">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <div className="h-7 w-44 animate-pulse rounded-lg bg-slate-200" />
+            <div className="mt-3 h-4 w-28 animate-pulse rounded-md bg-slate-200" />
+          </div>
+          <div className="h-4 w-24 animate-pulse rounded-md bg-slate-200" />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <span>正在加载板块详情数据</span>
+            <span>请稍候...</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+            <div className="h-full w-2/5 rounded-full bg-indigo-500 animate-[loadingBar_1.4s_ease-in-out_infinite]" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="h-5 w-20 animate-pulse rounded-md bg-slate-200" />
+            <div className="mt-4 h-6 w-32 animate-pulse rounded-md bg-slate-200" />
+            <div className="mt-4 h-5 w-20 animate-pulse rounded-md bg-slate-200" />
+            <div className="mt-4 h-6 w-24 animate-pulse rounded-md bg-slate-200" />
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="h-6 w-24 animate-pulse rounded-md bg-slate-200" />
+        <div className="mt-4 h-80 rounded-xl bg-white">
+          <div className="flex h-full items-center justify-center text-sm text-slate-400">图表加载中...</div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes loadingBar {
+          0% {
+            transform: translateX(-110%);
+          }
+          50% {
+            transform: translateX(90%);
+          }
+          100% {
+            transform: translateX(250%);
+          }
+        }
+      `}</style>
+    </div>
   );
 }
 
@@ -621,11 +869,205 @@ function IndicatorDetailDialog({
   );
 }
 
+function BoardDetailDialog({
+  boardKey,
+  item,
+  detail,
+  loading,
+  error,
+  open,
+  onOpenChange
+}: {
+  boardKey: string | null;
+  item: RankingItem | null;
+  detail: BlockDetailResponse | null;
+  loading: boolean;
+  error: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [componentSort, setComponentSort] = useState<"desc" | "asc">("desc");
+
+  useEffect(() => {
+    setComponentSort("desc");
+  }, [item?.name, open]);
+
+  const sortedComponents = useMemo(() => {
+    if (!detail) return [];
+    if (componentSort === "desc") {
+      return (detail.componentsUp ?? detail.components ?? []).slice(0, 10);
+    }
+    return (detail.componentsDown ?? []).slice(0, 10);
+  }, [componentSort, detail]);
+
+  if (!item) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[90vh] w-[96vw] max-w-6xl flex-col overflow-hidden p-0">
+        <DialogHeader className="mb-0 shrink-0 border-b border-slate-200 px-6 py-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-indigo-100 p-3 text-indigo-600">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div>
+                <DialogTitle>{detail?.name ?? item.name}</DialogTitle>
+                <DialogDescription className="mt-1">
+                  {boardKey === "hot" ? "热门板块详情" : "一级板块详情"}
+                </DialogDescription>
+              </div>
+            </div>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </DialogClose>
+          </div>
+        </DialogHeader>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {loading ? (
+            <BoardDetailLoadingState />
+          ) : error ? (
+            <div className="p-6 text-rose-600">{error}</div>
+          ) : detail ? (
+            <div className="space-y-6 px-6 py-5">
+              <div className="flex flex-wrap items-baseline gap-4">
+                <div className={`text-5xl font-bold ${(detail.riseFallDiff ?? 0) >= 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                  {fmtNum(detail.currentIndex)}
+                </div>
+                <div className={`text-2xl font-semibold ${(detail.riseFallDiff ?? 0) >= 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                  {formatChange(detail.riseFallRate)} ({detail.riseFallDiff && detail.riseFallDiff > 0 ? "+" : ""}
+                  {fmtNum(detail.riseFallDiff)})
+                </div>
+                <div className="text-sm text-slate-500">更新时间: {formatDateTime(detail.updateTime)}</div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between text-base">
+                    <span>今日：</span>
+                    <span className="font-semibold text-slate-900">{fmtNum(detail.currentIndex)}</span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-base">
+                    <span>昨日：</span>
+                    <span className="font-semibold text-slate-500">{fmtNum(detail.yesterdayIndex)}</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between text-base">
+                    <span>最高：</span>
+                    <span className="font-semibold text-rose-500">{fmtNum(detail.highIndex)}</span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-base">
+                    <span>最低：</span>
+                    <span className="font-semibold text-emerald-500">{fmtNum(detail.lowIndex)}</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between text-base">
+                    <span>涨跌值：</span>
+                    <span className={`font-semibold ${(detail.riseFallDiff ?? 0) >= 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                      {detail.riseFallDiff && detail.riseFallDiff > 0 ? "+" : ""}
+                      {fmtNum(detail.riseFallDiff)}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-base">
+                    <span>涨跌幅：</span>
+                    <span className={`font-semibold ${(detail.riseFallDiff ?? 0) >= 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                      {formatChange(detail.riseFallRate)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-semibold text-slate-900">走势图</h4>
+                </div>
+                <BlockTrendChart priceHistory={detail.priceHistory} />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="text-lg font-semibold text-slate-900">
+                    成分饰品{componentSort === "desc" ? "涨幅" : "跌幅"}排行（Top 10）
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setComponentSort((current) => (current === "desc" ? "asc" : "desc"))}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-300 hover:text-indigo-500"
+                    aria-label={componentSort === "desc" ? "切换到跌幅榜" : "切换到涨幅榜"}
+                    title={componentSort === "desc" ? "切换到跌幅榜" : "切换到涨幅榜"}
+                  >
+                    <span className="flex flex-col items-center justify-center gap-[2px]">
+                      <span
+                        className={`h-0 w-0 border-x-[5px] border-b-[6px] border-x-transparent ${
+                          componentSort === "desc" ? "border-b-indigo-500" : "border-b-slate-300"
+                        }`}
+                      />
+                      <span
+                        className={`h-0 w-0 border-x-[5px] border-t-[6px] border-x-transparent ${
+                          componentSort === "asc" ? "border-t-indigo-500" : "border-t-slate-300"
+                        }`}
+                      />
+                    </span>
+                  </button>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white">
+                  {sortedComponents.length === 0 ? (
+                    <div className="p-4 text-sm text-slate-500">暂无成分饰品数据</div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {sortedComponents.map((component, index) => (
+                        <div key={`${component.marketHashName}-${index}`} className="flex items-center gap-4 px-4 py-3">
+                          <div className="w-7 text-sm font-semibold text-slate-400">#{index + 1}</div>
+                          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-50">
+                            {component.imageUrl ? (
+                              <img src={component.imageUrl} alt={component.name} className="h-full w-full object-cover" />
+                            ) : null}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-slate-900">{component.name}</p>
+                            <p className="mt-1 text-sm text-slate-500">指数 {fmtNum(component.price)}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-base font-semibold text-slate-900">{fmtNum(component.price)}</p>
+                            <p className={`mt-1 text-sm font-semibold ${(component.priceRate ?? 0) >= 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                              {formatChange(component.priceRate)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-3 text-xs text-slate-500">
+          数据来源: SteamDT 板块关系、板块走势与成分饰品接口（经服务端抓取）
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Cs2WeatherStationPage() {
   const [data, setData] = useState<Cs2WeatherResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<DashboardCard | null>(null);
+  const [selectedBoardItem, setSelectedBoardItem] = useState<{ boardKey: string; item: RankingItem } | null>(null);
+  const [boardDetail, setBoardDetail] = useState<BlockDetailResponse | null>(null);
+  const [boardDetailLoading, setBoardDetailLoading] = useState(false);
+  const [boardDetailError, setBoardDetailError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -658,6 +1100,49 @@ export default function Cs2WeatherStationPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedBoardItem) {
+      setBoardDetail(null);
+      setBoardDetailError(null);
+      setBoardDetailLoading(false);
+      return;
+    }
+
+    let active = true;
+    const load = async () => {
+      setBoardDetailLoading(true);
+      setBoardDetailError(null);
+      try {
+        const params = new URLSearchParams({
+          type: selectedBoardItem.item.type ?? "",
+          typeVal: selectedBoardItem.item.typeVal ?? "",
+          level: String(selectedBoardItem.item.level ?? "")
+        });
+        const response = await fetch(`/api/invest-weather/cs2/block-detail?${params.toString()}`);
+        const json = (await response.json()) as BlockDetailResponse | { error?: string };
+        if (!response.ok) {
+          throw new Error((json as { error?: string }).error || "暂时无法加载板块详情");
+        }
+        if (active) {
+          setBoardDetail(json as BlockDetailResponse);
+        }
+      } catch (err) {
+        if (active) {
+          setBoardDetailError(err instanceof Error ? err.message : "加载板块详情失败");
+        }
+      } finally {
+        if (active) {
+          setBoardDetailLoading(false);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [selectedBoardItem]);
 
   const marketCards = data?.sections.find((section) => section.key === "market")?.cards ?? [];
 
@@ -703,7 +1188,17 @@ export default function Cs2WeatherStationPage() {
               </section>
 
               {data?.boards.map((board) => (
-                <BoardSectionPanel key={board.key} board={board} />
+                <BoardSectionPanel
+                  key={board.key}
+                  board={board}
+                  onSelectItem={
+                    board.key === "hot" || board.key === "itemTypeLevel1"
+                      ? (item) => {
+                          setSelectedBoardItem({ boardKey: board.key, item });
+                        }
+                      : undefined
+                  }
+                />
               ))}
             </div>
           )}
@@ -714,6 +1209,19 @@ export default function Cs2WeatherStationPage() {
           open={Boolean(selectedCard)}
           onOpenChange={(open) => {
             if (!open) setSelectedCard(null);
+          }}
+        />
+        <BoardDetailDialog
+          boardKey={selectedBoardItem?.boardKey ?? null}
+          item={selectedBoardItem?.item ?? null}
+          detail={boardDetail}
+          loading={boardDetailLoading}
+          error={boardDetailError}
+          open={Boolean(selectedBoardItem)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedBoardItem(null);
+            }
           }}
         />
       </AppShell>
