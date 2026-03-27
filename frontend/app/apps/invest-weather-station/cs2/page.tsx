@@ -193,6 +193,11 @@ function fmtNum(value: number | null, digits = 2) {
   });
 }
 
+function toProxyImageUrl(url: string) {
+  if (!url) return "";
+  return `/api/invest-weather/cs2/image-proxy?url=${encodeURIComponent(url)}`;
+}
+
 function cardStats(history: HistoryItem[]) {
   if (history.length === 0) {
     return {
@@ -1028,7 +1033,7 @@ function BoardDetailDialog({
                           <div className="w-7 text-sm font-semibold text-slate-400">#{index + 1}</div>
                           <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-50">
                             {component.imageUrl ? (
-                              <img src={component.imageUrl} alt={component.name} className="h-full w-full object-cover" />
+                              <img src={toProxyImageUrl(component.imageUrl)} alt={component.name} className="h-full w-full object-cover" />
                             ) : null}
                           </div>
                           <div className="min-w-0 flex-1">
