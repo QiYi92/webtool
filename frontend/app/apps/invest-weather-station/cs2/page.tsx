@@ -115,26 +115,26 @@ type BlockDetailResponse = {
 };
 
 const statusColorMap: Record<string, string> = {
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  success: "border-rose-200 bg-rose-50 text-rose-700",
   warning: "border-amber-200 bg-amber-50 text-amber-700",
   yellow: "border-amber-200 bg-amber-50 text-amber-700",
-  danger: "border-rose-200 bg-rose-50 text-rose-700",
+  danger: "border-emerald-200 bg-emerald-50 text-emerald-700",
   neutral: "border-slate-200 bg-slate-100 text-slate-600"
 };
 
 const valueColorMap: Record<string, string> = {
-  success: "text-emerald-500",
+  success: "text-rose-500",
   warning: "text-amber-500",
   yellow: "text-amber-500",
-  danger: "text-rose-500",
+  danger: "text-emerald-500",
   neutral: "text-slate-700"
 };
 
 const sparklineColorMap: Record<string, string> = {
-  success: "stroke-emerald-500",
+  success: "stroke-rose-500",
   warning: "stroke-amber-500",
   yellow: "stroke-amber-500",
-  danger: "stroke-rose-500",
+  danger: "stroke-emerald-500",
   neutral: "stroke-slate-400"
 };
 
@@ -556,9 +556,9 @@ function DashboardIndicatorCard({
     card.secondaryValue === null
       ? "text-slate-500"
       : card.secondaryValue > 0
-        ? "text-emerald-500"
+        ? "text-rose-500"
         : card.secondaryValue < 0
-          ? "text-rose-500"
+          ? "text-emerald-500"
           : "text-slate-500";
 
   return (

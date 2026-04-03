@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { ArrowRight, LineChart, ShieldCheck, Coins, Boxes } from "lucide-react";
+import { ArrowRight, LineChart, ShieldCheck, Coins, Boxes, Landmark } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -64,6 +64,19 @@ const moduleCards: ModuleCard[] = [
     Icon: Coins
   },
   {
+    key: "hk",
+    title: "港股恒生",
+    subtitle: "成长与红利风格切换",
+    description: "恒生、恒生科技、红利低波、美元利率与南向资金的组合观察。",
+    href: "/apps/invest-weather-station/hk",
+    tags: ["HSI", "HSTECH", "HSHYLV", "Style Rotation", "DGS10", "DFII10", "DXY", "NFCI", "USDHKD", "南向资金"],
+    visibleTagCount: 6,
+    borderClass: "border-rose-300/80",
+    iconClass: "bg-rose-100 text-rose-600",
+    overflowTagClass: "border-rose-200 bg-rose-50 text-rose-700",
+    Icon: Landmark
+  },
+  {
     key: "cs2",
     title: "CS2 饰品",
     subtitle: "虚拟资产交易温度",
@@ -85,7 +98,7 @@ export default function InvestWeatherStationPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-900">投资气象站</h1>
           <p className="text-sm text-slate-500">
-            四大板块指标监控：纳斯达克、标普500、黄金、CS2 饰品
+            五大板块指标监控：纳斯达克、标普500、黄金、港股恒生、CS2 饰品
           </p>
         </div>
 
