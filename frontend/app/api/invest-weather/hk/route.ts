@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fetchTencentIndexOhlc } from "@/lib/invest-weather/public-index-ohlc";
 
 type Point = { date: string; value: number };
+type OhlcPoint = { timestamp: number; open: number; high: number; low: number; close: number; volume?: number };
 type StatusColor = "success" | "warning" | "danger" | "neutral" | "yellow";
 
 type DashboardCard = {
@@ -21,6 +23,7 @@ type DashboardCard = {
   formula: string;
   dataRange: string;
   history: Point[];
+  ohlcHistory?: OhlcPoint[];
 };
 
 type Section = { key: string; title: string; cards: DashboardCard[] };
@@ -37,7 +40,7 @@ const FRED_API_KEY = process.env.FRED_API_KEY?.trim();
 const CACHE_FILE = path.join(process.cwd(), ".cache", "invest-weather", "hk.json");
 const REFRESH_INTERVAL_MINUTES = 30;
 const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 5;
 let refreshPromise: Promise<void> | null = null;
 
 const ETF_PROXY = {
@@ -104,7 +107,7 @@ async function fetchEastmoneyKlines(input: {
   secid: string;
   limit?: number;
   fqt?: string;
-}): Promise<Point[]> {
+}): Promise<{ points: Point[]; ohlcHistory: OhlcPoint[] }> {
   const params = new URLSearchParams({
     secid: input.secid,
     klt: "101",
@@ -132,13 +135,16 @@ async function fetchEastmoneyKlines(input: {
   };
   const rows = Array.isArray(data.data?.klines) ? data.data.klines : [];
   const out: Point[] = [];
+  const ohlcHistory: OhlcPoint[] = [];
   for (const row of rows) {
-    const [date, open, latest] = row.split(",");
-    const value = Number(latest ?? open);
-    if (!date || !Number.isFinite(value)) continue;
-    out.push({ date, value });
+    const [date, openRaw, closeRaw, highRaw, lowRaw, volumeRaw] = row.split(",");
+    const open = Number(openRaw); const close = Number(closeRaw); const high = Number(highRaw); const low = Number(lowRaw);
+    const volume = Number(volumeRaw); const timestamp = new Date(`${date}T00:00:00+08:00`).getTime();
+    if (!date || !Number.isFinite(timestamp) || ![open, close, high, low].every(Number.isFinite)) continue;
+    out.push({ date, value: close });
+    ohlcHistory.push({ timestamp, open, high, low, close, ...(Number.isFinite(volume) ? { volume } : {}) });
   }
-  return out;
+  return { points: out, ohlcHistory };
 }
 
 async function fetchSouthboundSeries(): Promise<Point[]> {
@@ -181,6 +187,16 @@ async function fetchSouthboundSeries(): Promise<Point[]> {
 function latest(points: Point[]) { return points.length ? points[points.length - 1] : null; }
 function prev(points: Point[]) { return points.length > 1 ? points[points.length - 2] : null; }
 function lastN(points: Point[], n: number) { return points.slice(Math.max(0, points.length - n)); }
+
+function marketDataFromOhlc(ohlcHistory: OhlcPoint[]) {
+  return {
+    ohlcHistory,
+    points: ohlcHistory.map((item) => ({
+      date: new Date(item.timestamp).toISOString().slice(0, 10),
+      value: item.close
+    }))
+  };
+}
 
 function pctChange(current: number | null, previous: number | null) {
   if (current === null || previous === null || previous === 0) return null;
@@ -284,6 +300,7 @@ function cardFromSeries(input: {
   points: Point[];
   secondaryValueOverride?: number | null;
   historyLimit?: number;
+  ohlcHistory?: OhlcPoint[];
 }) {
   const latestPoint = latest(input.points);
   const prevPoint = prev(input.points);
@@ -305,7 +322,8 @@ function cardFromSeries(input: {
     detailDescription: input.detailDescription,
     formula: input.formula,
     dataRange: input.dataRange,
-    history: lastN(input.points, input.historyLimit ?? 90)
+    history: lastN(input.points, input.historyLimit ?? 4000),
+    ...(input.ohlcHistory ? { ohlcHistory: input.ohlcHistory } : {})
   } satisfies DashboardCard;
 }
 
@@ -377,29 +395,31 @@ async function buildPayload(): Promise<Payload> {
     usdHkd,
     southbound
   ] = await Promise.all([
-    fetchEastmoneyKlines({ secid: "100.HSI", limit: 160 }),
-    fetchEastmoneyKlines({ secid: "124.HSTECH", limit: 160 }),
+    fetchTencentIndexOhlc("hkHSI").then(marketDataFromOhlc).catch(() => fetchEastmoneyKlines({ secid: "100.HSI", limit: 4000 })),
+    fetchTencentIndexOhlc("hkHSTECH").then(marketDataFromOhlc).catch(() => fetchEastmoneyKlines({ secid: "124.HSTECH", limit: 4000 })),
     (async () => {
       try {
-        const points = await fetchEastmoneyKlines({ secid: "124.HSHYLV", limit: 160 });
+        const marketData = await fetchEastmoneyKlines({ secid: "124.HSHYLV", limit: 4000 });
         return {
-          points,
+          ...marketData,
           ticker: "EM: HSHYLV",
           shortDescription: "恒生港股通高股息低波动指数",
           detailDescription: "官方指数 HSHYLV，反映港股通范围内高股息、低波动风格。",
           formula: "直接读取 HSHYLV 指数日线",
-          dataRange: "过去90个交易日"
+          dataRange: "过去180个交易日"
         };
       } catch (error) {
         console.warn("[invest-weather:hk] HSHYLV unavailable, fallback to ETF proxy", error);
-        const points = await fetchEastmoneyKlines({ secid: ETF_PROXY.secid, limit: 160, fqt: "1" });
+        const marketData = await fetchTencentIndexOhlc(`sh${ETF_PROXY.code}`)
+          .then(marketDataFromOhlc)
+          .catch(() => fetchEastmoneyKlines({ secid: ETF_PROXY.secid, limit: 4000, fqt: "1" }));
         return {
-          points,
+          ...marketData,
           ticker: `ETF Proxy: ${ETF_PROXY.code}`,
           shortDescription: "HSHYLV 失败时自动切到港股通红利低波ETF代理",
           detailDescription: "当前环境未能稳定获取 HSHYLV 指数，使用港股通红利低波ETF(520890) 作为风格代理，展示时需明确代理口径。",
           formula: "优先 HSHYLV；失败时回退至 ETF 520890 日线",
-          dataRange: "过去90个交易日"
+          dataRange: "过去180个交易日"
         };
       }
     })(),
@@ -412,7 +432,7 @@ async function buildPayload(): Promise<Payload> {
     fetchSouthboundSeries()
   ]);
 
-  const styleRotation = ratioSeries(hstech, hshylvResult.points);
+  const styleRotation = ratioSeries(hstech.points, hshylvResult.points);
   const styleRotationSecondary = derive20DayPct(styleRotation);
 
   const marketCards: DashboardCard[] = [
@@ -425,8 +445,9 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "港股核心宽基，反映市场整体风险偏好",
       detailDescription: "恒生指数是港股整体温度的最核心观察项，兼具中资金融、互联网平台与周期板块权重。",
       formula: "直接读取恒生指数日线",
-      dataRange: "过去90个交易日",
-      points: hsi
+      dataRange: "过去180个交易日",
+      points: hsi.points,
+      ohlcHistory: hsi.ohlcHistory
     }),
     cardFromSeries({
       id: "hstech_index",
@@ -437,8 +458,9 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "港股成长风格温度计",
       detailDescription: "恒生科技指数代表互联网平台、消费科技与创新成长方向，对美债利率和美元更敏感。",
       formula: "直接读取恒生科技指数日线",
-      dataRange: "过去90个交易日",
-      points: hstech
+      dataRange: "过去180个交易日",
+      points: hstech.points,
+      ohlcHistory: hstech.ohlcHistory
     })
   ];
 
@@ -453,7 +475,8 @@ async function buildPayload(): Promise<Payload> {
       detailDescription: hshylvResult.detailDescription,
       formula: hshylvResult.formula,
       dataRange: hshylvResult.dataRange,
-      points: hshylvResult.points
+      points: hshylvResult.points,
+      ohlcHistory: hshylvResult.ohlcHistory
     }),
     cardFromSeries({
       id: "hk_style_rotation",
@@ -464,7 +487,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "成长相对红利低波的强弱切换",
       detailDescription: "用恒生科技指数除以红利低波指数，识别港股当前偏进攻还是偏防守。若 HSHYLV 不可得，则自动沿用 ETF 代理口径计算。",
       formula: "风格比值 = 恒生科技指数 / 红利低波指数；状态取近20个交易日变化",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: styleRotation,
       secondaryValueOverride: styleRotationSecondary
     })
@@ -480,7 +503,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "美元走强通常压制港股估值",
       detailDescription: "港股在全球美元体系中定价，美元走强常对应外部流动性压力和风险偏好回落。",
       formula: "直接读取广义美元指数",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dxy
     }),
     cardFromSeries({
@@ -492,7 +515,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "长端利率上行会压制港股估值",
       detailDescription: "港股成长和高分红资产都受全球无风险利率影响，其中成长风格更敏感。",
       formula: "直接读取10年期美债收益率",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dgs10
     }),
     cardFromSeries({
@@ -504,7 +527,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "真实利率决定成长股贴现压力",
       detailDescription: "10年期实际利率越高，成长资产估值折现越重，对恒生科技压制越明显。",
       formula: "直接读取10年期 TIPS 实际收益率",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: realYield
     }),
     cardFromSeries({
@@ -516,7 +539,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "曲线倒挂常对应衰退预期",
       detailDescription: "美国收益率曲线反映全球增长预期和风险偏好，港股对这一信号较敏感。",
       formula: "10年期国债收益率 - 2年期国债收益率",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: curve
     }),
     cardFromSeries({
@@ -543,7 +566,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "靠近弱方区间时往往意味着流动性偏紧",
       detailDescription: "联系汇率制度下，港元若长期停留在弱方附近，通常意味着本地流动性条件偏紧。",
       formula: "直接读取港元兑美元日线",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: usdHkd
     }),
     cardFromSeries({
@@ -609,6 +632,10 @@ export async function GET() {
     return jsonNoStore({ error: "Failed to fetch data for Hong Kong weather station" }, { status: 500 });
   } catch (error) {
     console.error("[invest-weather:hk] refresh failed without cache", error);
+    const fallback = await readCache();
+    if (fallback && hasCompleteMetadata(fallback.payload)) {
+      return cacheResponse(fallback, { stale: true });
+    }
     return jsonNoStore({ error: "Failed to fetch data for Hong Kong weather station" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fetchPublicIndexOhlc, type OhlcPoint } from "@/lib/invest-weather/public-index-ohlc";
 
 type Point = { date: string; value: number };
 type StatusColor = "success" | "warning" | "danger" | "neutral" | "yellow";
@@ -21,6 +22,7 @@ type DashboardCard = {
   formula: string;
   dataRange: string;
   history: Point[];
+  ohlcHistory?: OhlcPoint[];
 };
 
 type Section = { key: string; title: string; cards: DashboardCard[] };
@@ -37,7 +39,7 @@ const FRED_API_KEY = process.env.FRED_API_KEY?.trim();
 const CACHE_FILE = path.join(process.cwd(), ".cache", "invest-weather", "sp500.json");
 const REFRESH_INTERVAL_MINUTES = 30;
 const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 6;
 let refreshPromise: Promise<void> | null = null;
 
 function jsonNoStore(body: unknown, init?: ResponseInit) {
@@ -148,7 +150,7 @@ function buffettTrendSeries(sp500: Point[], gdp: Point[]) {
     if (!gdpPoint || gdpPoint.value === 0) continue;
     raw.push({ date: sp.date, value: (sp.value / gdpPoint.value) * 480 });
   }
-  return lastN(raw, 90);
+  return lastN(raw, 180);
 }
 
 function getStatusForCard(id: string, value: number | null, secondaryValue: number | null): { text: string; color: StatusColor } {
@@ -218,6 +220,7 @@ function cardFromSeries(input: {
   formula: string;
   dataRange: string;
   points: Point[];
+  ohlcHistory?: OhlcPoint[];
 }) {
   const latestPoint = latest(input.points);
   const prevPoint = prev(input.points);
@@ -239,7 +242,8 @@ function cardFromSeries(input: {
     detailDescription: input.detailDescription,
     formula: input.formula,
     dataRange: input.dataRange,
-    history: lastN(input.points, 90)
+    history: lastN(input.points, 4000),
+    ...(input.ohlcHistory?.length ? { ohlcHistory: input.ohlcHistory } : {})
   } satisfies DashboardCard;
 }
 
@@ -315,7 +319,8 @@ async function buildPayload(): Promise<Payload> {
     cpiLevel,
     indproLevel,
     gdp,
-    marginLevel
+    marginLevel,
+    sp500Ohlc
   ] = await Promise.all([
     fetchSeries("SP500"),
     fetchSeries("DGS10"),
@@ -329,7 +334,11 @@ async function buildPayload(): Promise<Payload> {
     fetchSeries("CPIAUCSL"),
     fetchSeries("INDPRO"),
     fetchSeries("GDP"),
-    fetchSeries("BOGZ1FL663067003Q")
+    fetchSeries("BOGZ1FL663067003Q"),
+    fetchPublicIndexOhlc({ tencentSymbol: "us.INX", eastmoneySecid: "100.SPX" }).catch((error) => {
+      console.warn("[invest-weather:sp500] OHLC unavailable, using FRED line fallback", error);
+      return [];
+    })
   ]);
 
   const cpiYoy = yoySeries(cpiLevel);
@@ -347,8 +356,9 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "美股大盘整体趋势基准",
       detailDescription: "标普500指数实时走势，反映美股大盘整体表现。",
       formula: "直接读取 (标普500指数)",
-      dataRange: "过去90个交易日",
-      points: sp500
+      dataRange: "过去180个交易日",
+      points: sp500,
+      ohlcHistory: sp500Ohlc
     })
   ];
 
@@ -374,7 +384,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "12-20常态；>30恐慌",
       detailDescription: "VIX是标普500预期波动指标，常用于识别风险偏好变化。",
       formula: "直接读取 (CBOE VIX)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: vix
     }),
     cardFromSeries({
@@ -386,7 +396,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "无风险利率锚，影响估值折现",
       detailDescription: "10年期美债收益率是大类资产估值的重要折现锚。",
       formula: "直接读取",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dgs10
     }),
     cardFromSeries({
@@ -398,7 +408,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "政策利率决定流动性松紧",
       detailDescription: "美联储政策利率，影响风险资产估值与信用扩张。",
       formula: "直接读取",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: fedfunds
     })
   ];
@@ -413,7 +423,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "信用风险溢价温度计",
       detailDescription: "高收益债与国债利差反映信用风险与融资环境。",
       formula: "直接读取 (高收益债利差)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: hyd
     }),
     cardFromSeries({
@@ -425,7 +435,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "<0偏宽松，>0偏紧",
       detailDescription: "圣路易斯联储金融压力指数，监测系统性融资压力。",
       formula: "直接读取 (金融压力指数 STL)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: stress
     }),
     cardFromSeries({
@@ -437,7 +447,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "倒挂常是衰退预警",
       detailDescription: "10Y-2Y利差，反映经济周期与政策预期。",
       formula: "10年期收益率 - 2年期收益率",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: curve
     }),
     cardFromSeries({
@@ -449,7 +459,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "美元强弱影响跨国企业盈利换算",
       detailDescription: "贸易加权美元指数，反映美元对企业盈利与风险偏好的影响。",
       formula: "直接读取 (广义美元指数)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dxy
     })
   ];

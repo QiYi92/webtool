@@ -138,12 +138,12 @@ export function ToolsGrid() {
           return (await response.json()) as InvestWeatherApiResponse;
         };
 
-        const [nasdaq, sp500, gold, hk, cs2] = await Promise.all([
+        const [nasdaq, sp500, gold, hk, aShare] = await Promise.all([
           fetchLocalApi("/api/invest-weather/nasdaq"),
           fetchLocalApi("/api/invest-weather/sp500"),
           fetchLocalApi("/api/invest-weather/gold"),
           fetchLocalApi("/api/invest-weather/hk"),
-          fetchLocalApi("/api/invest-weather/cs2")
+          fetchLocalApi("/api/invest-weather/a-share")
         ]);
 
         const toMarketItem = (
@@ -167,7 +167,7 @@ export function ToolsGrid() {
           toMarketItem(sp500, "标普500"),
           toMarketItem(gold, "黄金"),
           toMarketItem(hk, "港股恒生"),
-          toMarketItem(cs2, "CS2 饰品")
+          toMarketItem(aShare, "沪深 A 股")
         ].filter((item): item is InvestWeatherDisplayItem => item !== null);
 
         setInvestItems(items);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fetchPublicIndexOhlc, type OhlcPoint } from "@/lib/invest-weather/public-index-ohlc";
 
 type Point = {
   date: string;
@@ -25,6 +26,7 @@ type DashboardCard = {
   formula: string;
   dataRange: string;
   history: Point[];
+  ohlcHistory?: OhlcPoint[];
 };
 
 type Section = {
@@ -56,7 +58,7 @@ const FRED_API_KEY = process.env.FRED_API_KEY?.trim();
 const CACHE_FILE = path.join(process.cwd(), ".cache", "invest-weather", "nasdaq.json");
 const REFRESH_INTERVAL_MINUTES = 30;
 const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 10;
 let refreshPromise: Promise<void> | null = null;
 
 function jsonNoStore(body: unknown, init?: ResponseInit) {
@@ -209,7 +211,7 @@ function buffettTrendSeries(sp500: Point[], gdp: Point[]) {
       value: (sp.value / gdpPoint.value) * 480
     });
   }
-  return lastN(raw, 90);
+  return lastN(raw, 180);
 }
 
 function getStatusForCard(
@@ -293,6 +295,7 @@ function cardFromSeries(input: {
   formula: string;
   dataRange: string;
   points: Point[];
+  ohlcHistory?: OhlcPoint[];
 }) {
   const latestPoint = latest(input.points);
   const prevPoint = prev(input.points);
@@ -314,7 +317,8 @@ function cardFromSeries(input: {
     detailDescription: input.detailDescription,
     formula: input.formula,
     dataRange: input.dataRange,
-    history: lastN(input.points, 90)
+    history: lastN(input.points, 4000),
+    ...(input.ohlcHistory?.length ? { ohlcHistory: input.ohlcHistory } : {})
   } satisfies DashboardCard;
 }
 
@@ -405,7 +409,8 @@ async function buildPayload(): Promise<Payload> {
     cpiLevel,
     indproLevel,
     gdp,
-    marginLevel
+    marginLevel,
+    nasdaqOhlc
   ] = await Promise.all([
     fetchSeries("DGS10"),
     fetchSeries("FEDFUNDS"),
@@ -422,7 +427,11 @@ async function buildPayload(): Promise<Payload> {
     fetchSeries("CPIAUCSL"),
     fetchSeries("INDPRO"),
     fetchSeries("GDP"),
-    fetchSeries("BOGZ1FL663067003Q")
+    fetchSeries("BOGZ1FL663067003Q"),
+    fetchPublicIndexOhlc({ tencentSymbol: "us.IXIC", eastmoneySecid: "100.NDX" }).catch((error) => {
+      console.warn("[invest-weather:nasdaq] OHLC unavailable, using FRED line fallback", error);
+      return [];
+    })
   ]);
 
   const vxnPoints = vxncls.length > 0 ? vxncls : vixcls;
@@ -442,8 +451,9 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "美国科技股整体趋势基准",
       detailDescription: "纳斯达克综合指数实时走势，反映美国科技股整体表现。",
       formula: "直接读取 (纳斯达克综合指数)",
-      dataRange: "过去90个交易日",
-      points: nasdaqcom
+      dataRange: "过去180个交易日",
+      points: nasdaqcom,
+      ohlcHistory: nasdaqOhlc
     }),
     cardFromSeries({
       id: "nasdaq100_index",
@@ -454,7 +464,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "大科技龙头表现，领先纳指整体",
       detailDescription: "纳斯达克100指数聚焦头部非金融科技公司，代表大盘科技风险偏好。",
       formula: "直接读取 (纳斯达克100指数)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: nasdaq100
     })
   ];
@@ -469,7 +479,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: ">4.5% 明显压估值；<4% 估值回暖",
       detailDescription: "10年期美债收益率是无风险利率锚，决定成长股远期现金流折现压力。",
       formula: "直接读取",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dgs10
     }),
     cardFromSeries({
@@ -481,7 +491,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "加息→压制高估值；降息→利好成长股",
       detailDescription: "美联储政策利率，影响流动性与风险资产估值环境。",
       formula: "直接读取",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: fedfunds
     }),
     cardFromSeries({
@@ -493,7 +503,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "上升=科技领涨；下降=资金转向防御",
       detailDescription: "纳斯达克/标普500比率，衡量科技股相对大盘的表现强弱。",
       formula: "纳斯达克指数 / 标普500指数",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: techStrength
     }),
     cardFromSeries({
@@ -505,7 +515,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "<15乐观；>30恐慌，常为反向买点",
       detailDescription: "反映纳指未来30天预期波动。受限于公开源，当前以VIXCLS作为近似替代。",
       formula: "直接读取（优先VXN，缺失用VIX）",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: vxnPoints
     }),
     cardFromSeries({
@@ -517,7 +527,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: ">2%压制估值；<1%有利成长股",
       detailDescription: "10年期实际利率（TIPS）代表通胀调整后的真实融资成本，是科技股估值的重要压力锚。",
       formula: "直接读取 (10年期TIPS实际收益率 DFII10)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dfii10
     })
   ];
@@ -532,7 +542,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "<3.5%健康；>5%信用危险，融资困难",
       detailDescription: "高收益债利差反映信用风险溢价，利差走阔通常对应风险偏好下降。",
       formula: "直接读取 (高收益债利差)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: hySpread
     }),
     cardFromSeries({
@@ -544,7 +554,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "美元强→压跨国企业EPS；美元弱反之",
       detailDescription: "美联储贸易加权美元指数，覆盖主要贸易伙伴货币，基期2006=100。",
       formula: "直接读取 (广义美元指数)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: broadDollar
     }),
     cardFromSeries({
@@ -556,7 +566,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: ">0偏紧；<0宽松；急速上升需警惕",
       detailDescription: "圣路易斯联储金融压力指数，反映融资环境松紧与市场波动压力。",
       formula: "直接读取 (金融压力指数 STL)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: stlfsi4
     }),
     cardFromSeries({
@@ -568,7 +578,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "负值（倒挂）= 衰退预警信号",
       detailDescription: "10Y-2Y收益率曲线利差，倒挂常被视为经济衰退的领先预警。",
       formula: "10年期收益率 - 2年期收益率",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: t10y2y
     })
   ];

@@ -8,10 +8,15 @@ from app.api.admin_users import router as admin_users_router
 from app.api.anime_guide import router as anime_guide_router
 from app.api.anime_crawler_logs import router as anime_crawler_logs_router
 from app.api.health import router as health_router
+from app.api.investment_prediction import router as investment_prediction_router
 from app.api.settings import router as settings_router
 from app.api.tools import router as tools_router
 from app.core.config import CORS_ALLOW_ORIGINS
 from app.services.anime_crawler.scheduler import shutdown_crawler_scheduler, start_on_startup
+from app.services.investment_prediction_scheduler import (
+    shutdown_prediction_scheduler,
+    start_prediction_scheduler,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,13 +42,16 @@ app.include_router(settings_router)
 app.include_router(tools_router, prefix="/tools", tags=["tools"])
 app.include_router(anime_guide_router)
 app.include_router(anime_crawler_logs_router)
+app.include_router(investment_prediction_router)
 
 
 @app.on_event("startup")
 def on_startup() -> None:
     start_on_startup()
+    start_prediction_scheduler()
 
 
 @app.on_event("shutdown")
 def on_shutdown() -> None:
     shutdown_crawler_scheduler()
+    shutdown_prediction_scheduler()

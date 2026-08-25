@@ -8,10 +8,12 @@ services:
       - ./backend/.env
     environment:
       CORS_ALLOW_ORIGINS: ${FRONTEND_PUBLIC_ORIGIN:-http://localhost:3000}
+      STOCK_SCREEN_ROOT: /opt/stock_screen
     ports:
       - "8888:8888"
     volumes:
       - ./backend/logs:/app/logs
+      - ../Stock_Screen_demo:/opt/stock_screen:ro
     healthcheck:
       test:
         [

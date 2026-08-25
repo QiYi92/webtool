@@ -21,7 +21,7 @@ def fetch(url: str) -> BeautifulSoup:
         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Connection": "keep-alive",
-        "Referer": "https://bangumi.tv/",
+        "Referer": "https://bgm.tv/",
     }
     session = requests.Session()
     session.trust_env = False
@@ -92,7 +92,7 @@ def debug_calendar(url: str) -> int:
 
 def main() -> None:
     total = 0
-    for url in ["https://bangumi.tv/calendar", "https://bgm.tv/calendar"]:
+    for url in ["https://bgm.tv/calendar", "https://bangumi.tv/calendar"]:
         try:
             total += debug_calendar(url)
         except Exception as exc:

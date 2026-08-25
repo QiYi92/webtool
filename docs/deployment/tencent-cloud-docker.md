@@ -75,6 +75,23 @@ JWT_EXPIRES_MINUTES=60
 CORS_ALLOW_ORIGINS=http://your-ip:3000,https://your-domain.com
 ```
 
+如果服务器无法直连 Bangumi（日志里出现 `Network is unreachable`、`Failed to establish a new connection`），需要给爬虫配置可用代理：
+
+```env
+# HTTP/HTTPS 代理
+BANGUMI_PROXY=http://127.0.0.1:7890
+
+# 或使用系统/容器环境里的 HTTP_PROXY、HTTPS_PROXY、NO_PROXY
+BANGUMI_TRUST_ENV_PROXY=1
+```
+
+说明：
+
+- `BANGUMI_PROXY` 只影响新番爬虫访问 `bgm.tv` / `bangumi.tv`。
+- `BANGUMI_BASE_URLS` 可调整备用域名顺序，默认是 `https://bgm.tv,https://bangumi.tv`。
+- 如果代理运行在宿主机，容器内的 `127.0.0.1` 指的是容器自身，不是宿主机；Linux Docker 通常需要把代理监听到宿主机内网 IP，或使用 `host.docker.internal` 并额外配置 Docker host gateway。
+- 如果使用 `socks5h://...` 代理，需要在后端镜像中安装 SOCKS 支持，建议优先使用 HTTP 代理。
+
 ### 4.2 `.env`
 
 ```env
@@ -114,6 +131,18 @@ docker compose ps
 ```bash
 docker compose logs -f backend
 docker compose logs -f frontend
+```
+
+验证后端容器能否访问 Bangumi：
+
+```bash
+docker compose exec backend python - <<'PY'
+from app.services.anime_crawler.http_client import fetch_bangumi_html
+import logging
+logging.basicConfig(level=logging.INFO)
+html, url = fetch_bangumi_html("/calendar", logger=logging.getLogger("test"), log_label="测试")
+print(url, len(html))
+PY
 ```
 
 日志说明：

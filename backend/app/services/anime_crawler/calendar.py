@@ -1,19 +1,16 @@
 import logging
-import os
 from datetime import date, timedelta
 from typing import List
 
-import requests
 from bs4 import BeautifulSoup
 from sqlalchemy import text
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
+from .http_client import fetch_bangumi_html
 from .db import get_conn, fetch_one
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://bangumi.tv"
+BASE_URL = "https://bgm.tv"
 CALENDAR_URL = f"{BASE_URL}/calendar"
 
 WEEKDAY_MAP = {
@@ -35,38 +32,11 @@ WEEKDAY_MAP = {
 }
 
 
-def _build_session() -> requests.Session:
-    session = requests.Session()
-    session.trust_env = False
-    verify_env = os.getenv("BANGUMI_SSL_VERIFY", "1").lower()
-    if verify_env in ("0", "false", "no"):
-        session.verify = False
-    ca_bundle = os.getenv("BANGUMI_CA_BUNDLE")
-    if ca_bundle:
-        session.verify = ca_bundle
-
-    retries = Retry(
-        total=3,
-        backoff_factor=0.5,
-        status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["GET"],
-    )
-    adapter = HTTPAdapter(max_retries=retries)
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
-    return session
-
-
 def _get_html(url: str) -> str:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; galileocat-webtool/1.0; +https://bangumi.tv)",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    }
-    session = _build_session()
-    resp = session.get(url, headers=headers, timeout=20)
-    resp.raise_for_status()
-    # 强制按 UTF-8 解码，避免 weekday 标题乱码导致解析失败
-    return resp.content.decode("utf-8", errors="ignore")
+    # 强制按 UTF-8 解码，避免 weekday 标题乱码导致解析失败。
+    html, final_url = fetch_bangumi_html(url, logger=logger, log_label="日历")
+    logger.info("【日历】请求成功：%s", final_url)
+    return html
 
 
 def _parse_weekday(text: str) -> int | None:
@@ -77,12 +47,12 @@ def _parse_weekday(text: str) -> int | None:
 
 
 def crawl_bangumi_calendar() -> List[int]:
-    logger.info("【日历】开始爬取：%s", CALENDAR_URL)
-    html = _get_html(CALENDAR_URL)
+    logger.info("【日历】开始爬取：/calendar")
+    html = _get_html("/calendar")
     soup = BeautifulSoup(html, "html.parser")
     day_blocks = soup.select("ul.coverList")
     if not day_blocks:
-        fallback_url = "https://bgm.tv/calendar"
+        fallback_url = "https://bangumi.tv/calendar"
         logger.warning("【日历】未解析到 coverList，尝试备用域名：%s", fallback_url)
         html = _get_html(fallback_url)
         soup = BeautifulSoup(html, "html.parser")

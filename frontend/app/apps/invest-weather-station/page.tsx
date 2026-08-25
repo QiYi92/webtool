@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { ArrowRight, LineChart, ShieldCheck, Coins, Boxes, Landmark } from "lucide-react";
+import { ArrowRight, LineChart, ShieldCheck, Coins, ChartCandlestick, Landmark } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -77,17 +77,17 @@ const moduleCards: ModuleCard[] = [
     Icon: Landmark
   },
   {
-    key: "cs2",
-    title: "CS2 饰品",
-    subtitle: "虚拟资产交易温度",
-    description: "抓取 SteamDT 首页聚合数据，观察大盘、成交、新增与板块涨跌排行。",
-    href: "/apps/invest-weather-station/cs2",
-    tags: ["大盘指数", "成交额", "成交量", "新增额", "新增量", "存世量", "热门板块", "一级板块", "二级板块", "三级板块"],
+    key: "a-share",
+    title: "沪深 A 股",
+    subtitle: "宽基与风格温度",
+    description: "观察沪深核心宽基、成长科技、中小盘与红利风格的强弱变化。",
+    href: "/apps/invest-weather-station/a-share",
+    tags: ["上证指数", "沪深300", "深证成指", "创业板指", "科创50", "中证500", "中证1000", "中证红利"],
     visibleTagCount: 6,
     borderClass: "border-emerald-300/80",
     iconClass: "bg-emerald-100 text-emerald-600",
     overflowTagClass: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    Icon: Boxes
+    Icon: ChartCandlestick
   }
 ];
 
@@ -98,7 +98,7 @@ export default function InvestWeatherStationPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-900">投资气象站</h1>
           <p className="text-sm text-slate-500">
-            五大板块指标监控：纳斯达克、标普500、黄金、港股恒生、CS2 饰品
+            五大板块指标监控：纳斯达克、标普500、黄金、港股恒生、沪深 A 股
           </p>
         </div>
 

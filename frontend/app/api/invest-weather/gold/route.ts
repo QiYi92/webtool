@@ -37,7 +37,7 @@ const FRED_API_KEY = process.env.FRED_API_KEY?.trim();
 const CACHE_FILE = path.join(process.cwd(), ".cache", "invest-weather", "gold.json");
 const REFRESH_INTERVAL_MINUTES = 30;
 const REFRESH_INTERVAL_MS = REFRESH_INTERVAL_MINUTES * 60 * 1000;
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 3;
 let refreshPromise: Promise<void> | null = null;
 
 function jsonNoStore(body: unknown, init?: ResponseInit) {
@@ -169,7 +169,7 @@ function cardFromSeries(input: {
     detailDescription: input.detailDescription,
     formula: input.formula,
     dataRange: input.dataRange,
-    history: lastN(input.points, 90)
+    history: lastN(input.points, 4000)
   } satisfies DashboardCard;
 }
 
@@ -262,7 +262,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "当前版本使用可持续公开源构造趋势代理",
       detailDescription: "由于公开接口对部分金银商品指数抓取限制，当前版本以公开可用序列构造趋势代理。",
       formula: "趋势代理（可用公开序列）",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: sp500
     }),
     cardFromSeries({
@@ -274,7 +274,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "当前版本使用可持续公开源构造趋势代理",
       detailDescription: "由于公开接口对部分金银商品指数抓取限制，当前版本以公开可用序列构造趋势代理。",
       formula: "趋势代理（可用公开序列）",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: vix
     })
   ];
@@ -289,7 +289,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "实际利率与黄金常负相关",
       detailDescription: "10年期TIPS实际收益率，反映扣除通胀后的真实利率水平。",
       formula: "直接读取 (10年期TIPS收益率)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: realYield
     }),
     cardFromSeries({
@@ -301,7 +301,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "通胀预期抬升通常利多黄金",
       detailDescription: "名义国债与TIPS收益率差，反映市场10年通胀预期。",
       formula: "直接读取 (10年期盈亏平衡通胀率)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: breakeven
     }),
     cardFromSeries({
@@ -340,7 +340,7 @@ async function buildPayload(): Promise<Payload> {
       shortDescription: "美元与黄金通常负相关",
       detailDescription: "贸易加权美元指数，黄金以美元计价时通常与其反向波动。",
       formula: "直接读取 (广义美元指数)",
-      dataRange: "过去90个交易日",
+      dataRange: "过去180个交易日",
       points: dxy
     }),
     cardFromSeries({

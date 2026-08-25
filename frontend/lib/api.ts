@@ -45,3 +45,32 @@ export async function fetchJSON<T>(
 
   return data as T;
 }
+
+export async function fetchBlob(path: string, options: RequestInit = {}): Promise<Blob> {
+  const headers = new Headers(options.headers);
+  const token = getToken();
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    try {
+      const data = body ? JSON.parse(body) : null;
+      throw new Error(data?.detail || "文件下载失败");
+    } catch (error) {
+      if (error instanceof Error && error.message !== "Unexpected end of JSON input") {
+        throw error;
+      }
+      throw new Error("文件下载失败");
+    }
+  }
+
+  return response.blob();
+}

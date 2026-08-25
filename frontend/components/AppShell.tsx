@@ -10,6 +10,7 @@ import {
   KeyRound,
   LineChart,
   MonitorCog,
+  TrendingUp,
   User,
   Workflow
 } from "lucide-react";
@@ -62,6 +63,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/apps/ai-workflow")) {
       return "AI工作流";
     }
+    if (pathname.startsWith("/apps/investment-prediction")) {
+      return "投资走势预测";
+    }
     const map = new Map<string, string>([
       ["/", "主页"],
       ["/apps/anime-guide", "新番导视"],
@@ -100,7 +104,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             items: [
               { label: "新番导视", href: "/apps/anime-guide", icon: CalendarDays },
               { label: "AI工作流", href: "/apps/ai-workflow", icon: Workflow },
-              { label: "投资气象站", href: "/apps/invest-weather-station", icon: LineChart }
+              { label: "投资气象站", href: "/apps/invest-weather-station", icon: LineChart },
+              {
+                label: "投资走势预测",
+                href: "/apps/investment-prediction",
+                icon: TrendingUp
+              }
             ]
           },
           ...(user?.role_group === "admin"

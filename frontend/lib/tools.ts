@@ -7,7 +7,8 @@ import {
   ListChecks,
   Compass,
   Workflow,
-  LineChart
+  LineChart,
+  TrendingUp
 } from "lucide-react";
 
 export type ToolItem = {
@@ -37,9 +38,16 @@ export const tools: ToolItem[] = [
   {
     key: "invest-weather-station",
     title: "投资气象站",
-    description: "追踪纳斯达克、标普500、黄金、港股恒生与 CS2 饰品指标",
+    description: "追踪纳斯达克、标普500、黄金、港股恒生与沪深 A 股指标",
     href: "/apps/invest-weather-station",
     icon: LineChart
+  },
+  {
+    key: "investment-prediction",
+    title: "投资走势预测",
+    description: "使用碗形策略筛选 A 股走势标的",
+    href: "/apps/investment-prediction",
+    icon: TrendingUp
   },
   {
     key: "tool-search",
