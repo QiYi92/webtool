@@ -1,0 +1,6 @@
+# 仅供宿主机运行 `frontend/npm run dev` 时使用。
+# 生产环境不要合并此文件，DSA 应只通过同域 /dsa 反向代理访问。
+services:
+  dsa:
+    ports:
+      - "127.0.0.1:8010:8000"

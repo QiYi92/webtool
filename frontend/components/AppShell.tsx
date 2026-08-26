@@ -10,6 +10,7 @@ import {
   KeyRound,
   LineChart,
   MonitorCog,
+  BrainCircuit,
   TrendingUp,
   User,
   Workflow
@@ -51,7 +52,15 @@ type UserInfo = {
 
 const SIDEBAR_KEY = "sidebar_collapsed";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  contentClassName,
+  shellClassName
+}: {
+  children: React.ReactNode;
+  contentClassName?: string;
+  shellClassName?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -65,6 +74,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
     if (pathname.startsWith("/apps/investment-prediction")) {
       return "投资走势预测";
+    }
+    if (pathname.startsWith("/apps/dsa")) {
+      return "DSA系统";
     }
     const map = new Map<string, string>([
       ["/", "主页"],
@@ -109,6 +121,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 label: "投资走势预测",
                 href: "/apps/investment-prediction",
                 icon: TrendingUp
+              },
+              {
+                label: "DSA系统",
+                href: "/apps/dsa",
+                icon: BrainCircuit
               }
             ]
           },
@@ -166,7 +183,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className={`min-h-screen bg-slate-100 ${shellClassName ?? ""}`}>
       <div className="flex min-h-screen w-full">
         <aside
           className={`sticky top-0 flex h-screen flex-col border-r border-slate-200 bg-slate-50 px-3 py-4 transition-all duration-200 ease-in-out ${
@@ -298,7 +315,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={toggleSidebar}
-            className="absolute left-full top-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-1 shadow-sm transition hover:bg-slate-50"
+            className="absolute left-full top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-1 shadow-sm transition hover:bg-slate-50"
             aria-label="Toggle sidebar"
           >
             {collapsed ? (
@@ -309,7 +326,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </aside>
 
-        <main className="flex-1 bg-white/70 px-8 py-10">{children}</main>
+        <main className={`flex-1 bg-white/70 px-8 py-10 ${contentClassName ?? ""}`}>{children}</main>
       </div>
     </div>
   );

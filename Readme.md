@@ -465,6 +465,7 @@ python3.12 -m venv .venv
 - `GET /api/invest-weather/nasdaq|sp500|gold|hk|a-share` 投资气象站 Next API（30分钟缓存刷新）
 - `/apps/console/anime-crawler` 新番爬虫控制台（admin）
 - `/apps/investment-prediction` 投资走势预测（所有登录用户）
+- `/apps/dsa` DSA系统（所有登录用户；本地开发需按 DSA 部署文档启动独立 DSA 容器）
 - `POST /tools/anime-crawler/run` 手动触发一次爬虫任务（admin）
 - `POST /tools/investment-prediction/run` 以指定策略启动筛选（全站单任务）
 

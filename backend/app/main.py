@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
+from app.api.dsa import router as dsa_router
 from app.api.admin_users import router as admin_users_router
 from app.api.anime_guide import router as anime_guide_router
 from app.api.anime_crawler_logs import router as anime_crawler_logs_router
@@ -40,6 +41,7 @@ app.include_router(auth_router)
 app.include_router(admin_users_router)
 app.include_router(settings_router)
 app.include_router(tools_router, prefix="/tools", tags=["tools"])
+app.include_router(dsa_router)
 app.include_router(anime_guide_router)
 app.include_router(anime_crawler_logs_router)
 app.include_router(investment_prediction_router)

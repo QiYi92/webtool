@@ -23,6 +23,11 @@ JWT_SECRET = get_env("JWT_SECRET", "dev-secret-change-me")
 JWT_ALGORITHM = get_env("JWT_ALGORITHM", "HS256")
 JWT_EXPIRES_MINUTES = int(get_env("JWT_EXPIRES_MINUTES", "60"))
 
+# DSA is a separately deployed service.  Never reuse the primary JWT signing
+# key: a compromise of either service must not mint credentials for the other.
+DSA_SSO_SECRET = get_env("DSA_SSO_SECRET")
+DSA_SSO_TTL_SECONDS = int(get_env("DSA_SSO_TTL_SECONDS", "60"))
+
 # CORS：逗号分隔的来源列表，例如：
 # CORS_ALLOW_ORIGINS=https://example.com,https://www.example.com
 CORS_ALLOW_ORIGINS = [

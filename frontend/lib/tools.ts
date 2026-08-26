@@ -8,7 +8,8 @@ import {
   Compass,
   Workflow,
   LineChart,
-  TrendingUp
+  TrendingUp,
+  BrainCircuit
 } from "lucide-react";
 
 export type ToolItem = {
@@ -48,6 +49,13 @@ export const tools: ToolItem[] = [
     description: "使用碗形策略筛选 A 股走势标的",
     href: "/apps/investment-prediction",
     icon: TrendingUp
+  },
+  {
+    key: "dsa",
+    title: "DSA系统",
+    description: "股票智能分析、报告、持仓、告警与策略问股",
+    href: "/apps/dsa",
+    icon: BrainCircuit
   },
   {
     key: "tool-search",
