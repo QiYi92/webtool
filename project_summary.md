@@ -36,6 +36,7 @@ ADB Supabase / PostgreSQL
 ├── frontend/              # Next.js 前端应用
 ├── backend/               # FastAPI 后端应用、任务数据与测试
 ├── dsa/                   # 内嵌式 Daily Stock Analysis 独立服务（上游源码）
+├── Stock_Screen/          # 内置投资走势预测策略源码与策略配置
 ├── docs/                  # 数据库、部署与指标口径文档
 ├── docker-compose.yml     # 生产基线编排：frontend、backend、dsa
 ├── docker-compose.local.yml # 仅宿主机开发覆盖：暴露 DSA 回环调试端口
@@ -132,7 +133,7 @@ backend/
 - `user_service.py`：用户查询、资料和密码修改，以及管理员用户管理。
 - `login_guard_service.py`：内存验证码、失败计数与登录锁定。
 - `anime_crawler/`：以 Bangumi 为数据源；`http_client.py` 提供主/备用域名及代理支持，`calendar.py`、`subject.py`、`episode.py` 分别抓取日历、番剧与章节，`scheduler.py` 负责 APScheduler 定时调度和运行日志。
-- `investment_prediction_service.py`：发现外部 Stock Screen 策略、管理手动/定时任务、结果、状态、原始 Excel 输出文件和日志。
+- `investment_prediction_service.py`：发现内置 `Stock_Screen` 策略、管理手动/定时任务、结果、状态、原始 Excel 输出文件和日志。
 - `investment_prediction_scheduler.py`：使用 APScheduler 按北京时间触发每日预测；任务执行时会跳过已有运行中的全站任务。
 - `crawler_log_service.py`：读取动漫爬虫的运行记录和日志尾部。
 
@@ -144,7 +145,7 @@ backend/
 | 动漫数据源 | Bangumi（`bgm.tv`，失败时 `bangumi.tv`） | 新番、详情和章节抓取；可配置 `BANGUMI_PROXY` |
 | 行情数据 | 腾讯公开 K 线、东方财富备用、FRED | 投资气象站的市场/宏观数据 |
 | 工作流集成 | Dify | iframe 工作流与会话同步 |
-| 投资预测外部目录 | `../Stock_Screen_demo`（容器中 `/opt/stock_screen`） | 可执行策略来源，Compose 以只读卷挂载 |
+| 投资预测策略源码 | `./Stock_Screen`（容器中 `/opt/stock_screen`） | 仓库内受版本管理的可执行策略来源，Compose 以只读卷挂载 |
 | 运行日志 | `backend/logs/ai_workflow_sessions/`、爬虫日志目录 | AI 会话和爬虫运行记录 |
 | 运行缓存 | `frontend/.cache/invest-weather/`、`backend/data/investment_prediction/` | 行情快照、预测任务产物及可下载的原始 Excel 报告 |
 
@@ -157,7 +158,7 @@ backend/
 ```text
 浏览器 ──> frontend :3000 ──HTTP──> backend :8888 ──DATABASE_URL──> PostgreSQL
                  │                    │
-                 │                    └── /opt/stock_screen（只读策略目录）
+                 │                    └── /opt/stock_screen（仓库内 Stock_Screen 的只读挂载）
                  └── /dsa 反向代理 ──> dsa :8000 ──DSA_DATABASE_URL──> PostgreSQL（仅 dsa_* 表）
 ```
 

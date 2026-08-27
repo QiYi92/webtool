@@ -30,7 +30,10 @@ def _detect_backend_root() -> Path:
 
 
 BACKEND_ROOT = _detect_backend_root()
-DEFAULT_STOCK_SCREEN_ROOT = BACKEND_ROOT.parent.parent / "Stock_Screen_demo"
+# The strategy source is a versioned module in this repository. Docker keeps
+# the stable container mount path (/opt/stock_screen), while direct local runs
+# discover the source directory from the repository root.
+DEFAULT_STOCK_SCREEN_ROOT = BACKEND_ROOT.parent / "Stock_Screen"
 STOCK_SCREEN_ROOT = Path(
     os.getenv("STOCK_SCREEN_ROOT", str(DEFAULT_STOCK_SCREEN_ROOT))
 ).expanduser().resolve()
@@ -79,7 +82,7 @@ def list_strategies() -> list[str]:
     config_dir = STOCK_SCREEN_ROOT / "configs"
     if not config_dir.is_dir():
         raise RuntimeError(
-            f"未找到 Stock_Screen_demo 策略目录：{config_dir}。"
+            f"未找到 Stock_Screen 策略目录：{config_dir}。"
             "请设置 STOCK_SCREEN_ROOT。"
         )
     return sorted(path.stem for path in config_dir.glob("*.json") if path.is_file())
@@ -336,7 +339,7 @@ def _result_rows(result: Any) -> list[dict[str, str]]:
 def _load_screen_module() -> Any:
     if not (STOCK_SCREEN_ROOT / "screen_bowl_shape.py").is_file():
         raise RuntimeError(
-            f"未找到 Stock_Screen_demo：{STOCK_SCREEN_ROOT}。"
+            f"未找到 Stock_Screen：{STOCK_SCREEN_ROOT}。"
             "请设置 STOCK_SCREEN_ROOT。"
         )
     root_text = str(STOCK_SCREEN_ROOT)

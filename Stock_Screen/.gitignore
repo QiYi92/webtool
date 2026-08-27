@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+.venv/
+venv/
+env/
+
+data/
+verificate_data/
+
+*.log

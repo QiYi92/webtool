@@ -1,0 +1,58 @@
+{
+  "basic": {
+    "min_market_value": 10000000000,
+    "min_listed_days": 1095,
+    "min_k_days": 15,
+    "k_lookback_days": 45,
+    "trend_k_days": 250,
+    "trend_lookback_count": 260,
+    "excluded_board_prefixes": ["300", "301", "302", "688", "689"],
+    "sector_keyword": null,
+    "enable_listing_filter": true,
+    "enable_trend_filter": true,
+    "enable_k_data_filter": true,
+    "enable_bowl_filter": true,
+    "enable_volume_filter": true
+  },
+  "trend": {
+    "min_year_pct": -0.15,
+    "require_positive_slope": true,
+    "require_latest_above_ma60": false,
+    "ma_days": 60
+  },
+  "volume": {
+    "prev_volume_stable_ratio": 1.8,
+    "latest_volume_to_prev_avg_ratio": 1.01,
+    "yesterday_volume_to_prev2_avg_ratio": 1.35,
+    "require_latest_not_below_prev_max": true,
+    "require_latest_above_yesterday": true
+  },
+  "bowl": {
+    "window_days": 30,
+    "bottom_start_index": 10,
+    "enable_budding_bowl": true,
+    "budding_right_min_days": 2,
+    "budding_right_max_days": 8,
+    "budding_min_rebound_ratio": 0.02,
+    "budding_max_rebound_ratio": 0.12,
+    "budding_latest_to_left_min": 0.55,
+    "budding_latest_to_left_max": 0.82,
+    "budding_left_to_bottom_max_days": 26,
+    "enable_early_breakout": false,
+    "early_right_min_days": 3,
+    "early_right_max_days": 7,
+    "early_min_rebound_ratio": 0.12,
+    "early_latest_to_left_min": 0.85,
+    "early_latest_to_left_max": 1.2,
+    "early_min_latest_day_pct": 0.055,
+    "enable_mature_bowl": false,
+    "mature_min_rebound_ratio": 0.18,
+    "mature_latest_to_left_min": 0.88,
+    "mature_latest_to_left_max": 1.12,
+    "mature_right_up_days_min": 4,
+    "common_left_to_bottom_min_days": 3,
+    "common_left_to_bottom_max_days": 18,
+    "common_drop_ratio_min": 0.12,
+    "common_drop_ratio_max": 0.6
+  }
+}

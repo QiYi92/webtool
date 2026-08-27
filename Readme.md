@@ -469,15 +469,15 @@ python3.12 -m venv .venv
 - `POST /tools/anime-crawler/run` 手动触发一次爬虫任务（admin）
 - `POST /tools/investment-prediction/run` 以指定策略启动筛选（全站单任务）
 
-投资走势预测依赖同级目录中的 `Stock_Screen_demo` 项目。本地默认自动读取
-`../Stock_Screen_demo`；Docker Compose 会将该目录只读挂载到
-`/opt/stock_screen`。
+投资走势预测依赖本仓库内受版本管理的 `Stock_Screen/` 策略模块；本地直接运行
+backend 时自动读取该目录，Docker Compose 也会将其只读挂载到
+`/opt/stock_screen`。不再依赖服务器同级的 `Stock_Screen_demo` 目录。
 
 ### 投资走势预测补充说明
 
 - 页面默认展示历史预测列表；列表会静默刷新运行中的任务，不会切换为加载占位状态。
 - 历史任务记录任务类型（`manual` 手动执行 / `scheduled` 定时执行）和任务状态（`running`、`success`、`failed`）。界面显示为运行中、执行完成、执行失败。
-- 历史详情和最新筛选结果均可下载原始 `.xlsx` 报告。报告是 `Stock_Screen_demo` 生成的原文件，保存路径为 `backend/data/investment_prediction/{task_id}.xlsx`，保留原有工作表和格式。
+- 历史详情和最新筛选结果均可下载原始 `.xlsx` 报告。报告是 `Stock_Screen` 生成的原文件，保存路径为 `backend/data/investment_prediction/{task_id}.xlsx`，保留原有工作表和格式。
 - 齿轮设置页分为“预测筛选设置”和“定时设置”。定时设置支持每天指定时分（北京时间）执行一次默认碗形策略；调度由后端 APScheduler 执行，浏览器关闭后仍有效。
 - 同一时刻全站只允许一个预测任务运行；定时任务遇到已有运行任务会跳过本次执行。
 

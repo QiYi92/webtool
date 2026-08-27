@@ -43,7 +43,8 @@ services:
       - "8888:8888"
     volumes:
       - ./backend/logs:/app/logs
-      - ../Stock_Screen_demo:/opt/stock_screen:ro
+      # 策略源码随本仓库发布，容器内保持稳定的应用路径。
+      - ./Stock_Screen:/opt/stock_screen:ro
     # 让容器可通过 host.docker.internal 访问宿主机代理。
     # 仅在 backend/.env 设置 BANGUMI_PROXY=http://host.docker.internal:<port> 时使用。
     extra_hosts:
