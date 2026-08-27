@@ -66,6 +66,7 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8888}
+        DSA_INTERNAL_URL: http://dsa:8000
     container_name: galileocat-frontend
     restart: unless-stopped
     depends_on:

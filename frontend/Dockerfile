@@ -11,6 +11,11 @@ COPY . .
 # 这个变量会注入到浏览器端代码，生产环境务必改成你的服务地址。
 ARG NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8888
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+# Next.js rewrites are resolved during `next build`, so the internal DSA
+# service address must be present in this build stage rather than only at
+# container runtime.
+ARG DSA_INTERNAL_URL=http://127.0.0.1:8010
+ENV DSA_INTERNAL_URL=${DSA_INTERNAL_URL}
 
 RUN npm run build && npm prune --omit=dev
 
