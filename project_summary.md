@@ -2,7 +2,7 @@
 
 ## 1. 项目定位
 
-`galileocat-webtool` 是一个面向个人使用和持续扩展的工具集合网站。它以独立的 Next.js 前端和 FastAPI 后端构成全栈服务，后端连接 ADB Supabase 托管的 PostgreSQL 数据库，并可通过 Docker Compose 在单机部署。
+`galileocat-webtool` 是一个面向个人使用和持续扩展的工具集合网站。它由 Next.js 前端、FastAPI 后端和独立 DSA 服务构成，业务数据使用 ADB Supabase 托管的 PostgreSQL 数据库，并可通过 Docker Compose 在单机部署。
 
 当前功能主要包括：账号与权限管理、动漫新番导视及抓取、AI Workflow 嵌入管理、投资气象站，以及投资走势预测任务。
 
@@ -35,8 +35,10 @@ ADB Supabase / PostgreSQL
 .
 ├── frontend/              # Next.js 前端应用
 ├── backend/               # FastAPI 后端应用、任务数据与测试
+├── dsa/                   # 内嵌式 Daily Stock Analysis 独立服务（上游源码）
 ├── docs/                  # 数据库、部署与指标口径文档
-├── docker-compose.yml     # 前后端容器编排
+├── docker-compose.yml     # 生产基线编排：frontend、backend、dsa
+├── docker-compose.local.yml # 仅宿主机开发覆盖：暴露 DSA 回环调试端口
 ├── Readme.md              # 项目功能与使用说明
 └── LICENSE                # 开源许可
 ```
@@ -88,6 +90,7 @@ frontend/
 | AI 工作流 | `/apps/ai-workflow`、`/apps/ai-workflow/[id]` | 工作流配置与 Dify iframe 页面 |
 | 投资气象站 | `/apps/invest-weather-station/{nasdaq,sp500,gold,hk,a-share}` | 五个市场页面 |
 | 投资预测 | `/apps/investment-prediction` | 策略选择、任务运行与结果查看 |
+| DSA 系统 | `/apps/dsa` | 同域 iframe 嵌入的独立股票分析服务 |
 
 ## 5. 后端：`backend/`
 
@@ -149,18 +152,35 @@ backend/
 
 ## 7. 部署与启动关系
 
-`docker-compose.yml` 定义两个服务：
+`docker-compose.yml` 定义三个生产服务：
 
 ```text
-frontend :3000 ──HTTP──> backend :8888 ──DATABASE_URL──> PostgreSQL
-                             │
-                             └── /opt/stock_screen（只读策略目录）
+浏览器 ──> frontend :3000 ──HTTP──> backend :8888 ──DATABASE_URL──> PostgreSQL
+                 │                    │
+                 │                    └── /opt/stock_screen（只读策略目录）
+                 └── /dsa 反向代理 ──> dsa :8000 ──DSA_DATABASE_URL──> PostgreSQL（仅 dsa_* 表）
 ```
 
 - 后端读取 `backend/.env`，其中包含数据库、JWT、Supabase、Bangumi 代理等配置。
-- Compose 根目录环境变量控制前端公开 API 地址、允许的前端来源和 `FRED_API_KEY`。
+- DSA 读取 `dsa/.env` 中的模型、行情、搜索和通知配置；该文件不入库，每个环境必须独立配置。根目录 `.env` 仅向 DSA 注入 `DSA_DATABASE_URL`、`DSA_SSO_SECRET` 和 Cookie 安全设置。
+- Compose 根目录 `.env` 控制前端公开 API 地址、允许的前端来源、`FRED_API_KEY` 与 DSA 容器配置。
 - 后端健康检查为 `GET /health`；前端等待后端通过检查后再启动。
 - 生产部署细节见 `docs/deployment/tencent-cloud-docker.md`。
+
+### 开发与生产环境边界（必须遵守）
+
+本项目不以开发机地址作为生产配置来源。地址、密钥与运行数据都必须按环境独立配置；代码只保留开发时的合理默认值，生产部署必须显式注入生产变量。
+
+| 项目 | 本地开发 | 生产部署 |
+| --- | --- | --- |
+| Compose 命令 | `docker compose -f docker-compose.yml -f docker-compose.local.yml ...`（仅需要宿主机调试 DSA 时） | 只使用 `docker compose ...`；禁止合并 `docker-compose.local.yml` |
+| DSA 服务地址 | 宿主机 Next dev 可使用 `http://127.0.0.1:8010` | 前端构建时必须使用 Docker 服务 DNS `http://dsa:8000`，浏览器只访问同域 `/dsa` |
+| 后端 API 地址 | `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8888` 可用于本机浏览器 | 必须设置为真实生产 API 地址；禁止在页面代码中写死 `127.0.0.1` 或 `localhost` |
+| 容器访问宿主机 | `127.0.0.1` 只表示当前容器 | 需要宿主机代理时使用 `host.docker.internal`，并依赖 Compose 的 `host-gateway` 映射 |
+| DSA Cookie | 本地 HTTP 调试时可临时 `DSA_COOKIE_SECURE=false` | HTTPS 必须为 `DSA_COOKIE_SECURE=true` |
+| 密钥与环境文件 | 可用本机独立 `.env` / `dsa/.env` | 在服务器单独维护同名文件；不得复制开发库、提交 Git 或在日志/聊天中泄露 |
+
+Next.js 的 `NEXT_PUBLIC_*` 变量和 `DSA_INTERNAL_URL` rewrite 均在镜像构建期写入产物；修改它们后必须重建 `frontend` 镜像，单纯重启容器不会生效。`DSA_INTERNAL_URL` 只能在容器构建期使用 `http://dsa:8000`，不能使用宿主机 `127.0.0.1:8010`。
 
 ## 8. 文档索引
 
@@ -174,6 +194,7 @@ frontend :3000 ──HTTP──> backend :8888 ──DATABASE_URL──> Postgre
 | `docs/database/investment-prediction-task-status-migration.sql` | 已有投资预测表的定时设置、任务类型与状态增量迁移 |
 | `docs/invest-weather/judgement-logic.md` | 五类市场的指标、数据与判定口径 |
 | `docs/deployment/tencent-cloud-docker.md` | 腾讯云 Docker 部署与排障 |
+| `docs/deployment/dsa-embedded-service.md` | DSA 的 Supabase、SSO 与本地/生产部署边界 |
 
 ## 9. 维护注意点
 
@@ -182,3 +203,4 @@ frontend :3000 ──HTTP──> backend :8888 ──DATABASE_URL──> Postgre
 - 数据库结构不由应用自动变更；在 Supabase SQL Editor 手动执行 `docs/database/` 中对应的 SQL 脚本后再部署代码。
 - `frontend/.cache/`、`backend/data/` 和日志目录包含运行产物，通常不应作为稳定源码接口依赖。
 - 工作流会话日志及环境变量可能含敏感信息，提交或迁移前应进行脱敏检查。
+- 发布前需在目标环境执行 `docker compose config -q`，并对需要重建的服务显式 `--build`；不要依赖开发机正在运行的容器、端口、缓存或 `.env`。

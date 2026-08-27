@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getSupabaseClient } from "@/lib/supabase";
+import { getApiUrl } from "@/lib/api";
 
 type ToolsResponse = Record<string, unknown> | null;
 
@@ -44,7 +45,10 @@ export default function DashboardPage() {
       setUserEmail(user.email ?? null);
 
       try {
-        const response = await fetch("http://127.0.0.1:8888/tools/", {
+        // Keep all browser-to-backend requests on the configured API base URL.
+        // In particular, never use a host loopback address here: it only works
+        // on a developer machine and is invalid for production visitors.
+        const response = await fetch(getApiUrl("/tools/"), {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }

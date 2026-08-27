@@ -3,6 +3,11 @@ import { getToken } from "@/lib/auth";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8888";
 
+/** Build a backend URL from the environment-specific browser API base. */
+export function getApiUrl(path: string): string {
+  return `${API_BASE_URL}${path}`;
+}
+
 type FetchJsonOptions = RequestInit & {
   json?: unknown;
 };
@@ -22,7 +27,7 @@ export async function fetchJSON<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(getApiUrl(path), {
     ...options,
     headers,
     body: options.json !== undefined ? JSON.stringify(options.json) : options.body
@@ -54,7 +59,7 @@ export async function fetchBlob(path: string, options: RequestInit = {}): Promis
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(getApiUrl(path), {
     ...options,
     headers
   });
