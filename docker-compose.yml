@@ -44,6 +44,10 @@ services:
     volumes:
       - ./backend/logs:/app/logs
       - ../Stock_Screen_demo:/opt/stock_screen:ro
+    # 让容器可通过 host.docker.internal 访问宿主机代理。
+    # 仅在 backend/.env 设置 BANGUMI_PROXY=http://host.docker.internal:<port> 时使用。
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test:
         [
