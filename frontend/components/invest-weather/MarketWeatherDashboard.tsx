@@ -292,10 +292,10 @@ function DashboardIndicatorCard({
           : "text-slate-500";
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-2xl font-bold text-slate-900">{card.name}</h3>
+          <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">{card.name}</h3>
           <p className="mt-1 break-all text-lg font-semibold tracking-wide text-slate-500">{card.ticker}</p>
         </div>
         <div className="flex shrink-0 items-start gap-2">
@@ -313,8 +313,8 @@ function DashboardIndicatorCard({
       </div>
 
       <div className="mb-3 flex items-end gap-3">
-        <span className={`text-5xl font-bold ${numberColorClass}`}>{formatValue(card.value, card.unit)}</span>
-        <span className="pb-2 text-2xl font-semibold text-slate-500">{card.unit || ""}</span>
+        <span className={`break-all text-3xl font-bold sm:text-5xl ${numberColorClass}`}>{formatValue(card.value, card.unit)}</span>
+        <span className="pb-1 text-lg font-semibold text-slate-500 sm:pb-2 sm:text-2xl">{card.unit || ""}</span>
       </div>
 
       <div className="mb-4 text-lg font-semibold text-slate-500">
@@ -390,8 +390,8 @@ function IndicatorDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-5xl flex-col overflow-hidden p-0">
-        <DialogHeader className="mb-0 shrink-0 border-b border-slate-200 px-6 py-5">
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-5xl flex-col overflow-hidden p-0 sm:w-[95vw]">
+        <DialogHeader className="mb-0 shrink-0 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-indigo-100 p-3 text-indigo-600">
@@ -414,7 +414,7 @@ function IndicatorDetailDialog({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="space-y-6 px-6 py-5">
+          <div className="space-y-5 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-5">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="mb-1 text-sm text-slate-500">当前值</p>
@@ -479,7 +479,7 @@ function IndicatorDetailDialog({
                 period={professionalPeriod}
                 emptyText={chartPeriod === "intraday" ? "该指标的数据源暂不提供当日分时数据" : "暂无可用历史数据"}
               />
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-1" role="group" aria-label="历史图表周期">
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 pt-1" role="group" aria-label="历史图表周期">
                 {chartPeriodOptions.map((option) => {
                   const active = chartPeriod === option.key;
                   return (
@@ -517,7 +517,7 @@ function IndicatorDetailDialog({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-3">
+        <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-xs text-slate-500">数据来源: {sourceFooter} · 点击空白处关闭</p>
           {sourceLink ? (
             <a

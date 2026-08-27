@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] DSA Web 侧栏统一为工具站式分组导航，支持桌面展开/折叠偏好和移动端全屏导航抽屉。
 - [新功能] 支持由宿主工具站以短期签名票据建立 DSA 会话，并可使用 Supabase PostgreSQL 的 `dsa_*` 独立表；远程数据库结构改为由 SQL 脚本人工维护。
 - [修复] Linux/Docker 分享图补齐 Noto CJK 字体与中韩文字体栈，避免 PNG 只显示数字和英文、中文或韩文内容消失。
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->

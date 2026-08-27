@@ -86,6 +86,10 @@ export const Drawer: React.FC<DrawerProps> = ({
             side === 'right' ? 'border-border/80' : 'border-border/70 shadow-2xl',
             side === 'left' ? 'animate-slide-in-left' : 'animate-slide-in-right'
           )}
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
         >
           <div className="flex items-center justify-between border-b border-border/60 px-6 py-4">
             {title ? (

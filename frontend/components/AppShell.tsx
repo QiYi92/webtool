@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ChevronsLeft,
   ChevronsRight,
+  Menu,
+  X,
   CalendarDays,
   Home,
   KeyRound,
@@ -55,15 +57,18 @@ const SIDEBAR_KEY = "sidebar_collapsed";
 export function AppShell({
   children,
   contentClassName,
-  shellClassName
+  shellClassName,
+  mobileNavigationMode = "header"
 }: {
   children: React.ReactNode;
   contentClassName?: string;
   shellClassName?: string;
+  mobileNavigationMode?: "header" | "floating";
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const pageTitle = useMemo(() => {
     if (pathname.startsWith("/apps/invest-weather-station")) {
@@ -158,6 +163,19 @@ export function AppShell({
   }, []);
 
   useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
     const loadUser = async () => {
       try {
         const data = await fetchJSON<UserInfo>("/me");
@@ -182,11 +200,52 @@ export function AppShell({
     router.replace("/login");
   };
 
+  const navigateTo = (href: string) => {
+    setMobileNavOpen(false);
+    router.push(href);
+  };
+
+  const mobileNavigation = (
+    <nav className="space-y-6 overflow-y-auto px-5 pb-6 pt-4">
+      {navGroups.map((group) => (
+        <div key={group.title} className="space-y-2">
+          <div className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">{group.title}</div>
+          {group.items?.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href;
+            return (
+              <button key={item.href} type="button" onClick={() => navigateTo(item.href)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-base ${active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"}`}>
+                <Icon className="h-5 w-5" /><span>{item.label}</span>
+              </button>
+            );
+          })}
+          {group.sections?.map((section) => (
+            <div key={section.title} className="space-y-1 pt-1">
+              <div className="px-3 pb-1 text-xs font-medium text-slate-400">{section.title}</div>
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.href;
+                return <button key={item.href} type="button" onClick={() => navigateTo(item.href)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-base ${active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"}`}><Icon className="h-5 w-5" /><span>{item.label}</span></button>;
+              })}
+            </div>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+
   return (
     <div className={`min-h-screen bg-slate-100 ${shellClassName ?? ""}`}>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-[100dvh] w-full">
+        {mobileNavigationMode === "header" ? <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <button type="button" onClick={() => setMobileNavOpen(true)} className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100" aria-label="打开导航菜单"><Menu className="h-5 w-5" /></button>
+          <div className="min-w-0 text-center"><div className="truncate text-sm font-semibold text-slate-900">{pageTitle}</div></div>
+          <button type="button" onClick={() => navigateTo("/settings/account")} className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600" aria-label="账号设置">{(user?.email || "U").slice(0, 2).toUpperCase()}</button>
+        </div> : null}
+        {mobileNavigationMode === "floating" && !mobileNavOpen ? <button type="button" onClick={() => setMobileNavOpen(true)} className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-900 text-white shadow-lg shadow-slate-900/25 transition-transform hover:scale-105 active:scale-95 md:hidden" aria-label="打开工具站导航"><Menu className="h-6 w-6" /></button> : null}
+        {mobileNavOpen ? <div className="fixed inset-0 z-50 bg-slate-950/40 md:hidden" role="dialog" aria-modal="true" aria-label="导航菜单"><div className="flex h-[100dvh] w-full max-w-sm flex-col bg-white shadow-2xl" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}><div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 px-5"><div className="flex items-center gap-3"><img src="/images/logo.png" alt="Logo" className="h-8 w-8 rounded-lg" /><span className="text-sm font-semibold text-slate-900">二进制伽利略的工具站</span></div><button type="button" onClick={() => setMobileNavOpen(false)} className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100" aria-label="关闭导航菜单"><X className="h-5 w-5" /></button></div>{mobileNavigation}<div className="shrink-0 border-t border-slate-200 p-5"><button type="button" onClick={() => navigateTo("/settings/account")} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-slate-700 hover:bg-slate-100"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold">{(user?.email || "U").slice(0, 2).toUpperCase()}</div><span className="min-w-0 flex-1 truncate">{user?.username || user?.email || "用户"}</span></button><button type="button" onClick={handleSignOut} className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 text-sm font-medium text-slate-700">退出登录</button></div></div></div> : null}
         <aside
-          className={`sticky top-0 flex h-screen flex-col border-r border-slate-200 bg-slate-50 px-3 py-4 transition-all duration-200 ease-in-out ${
+          className={`sticky top-0 hidden h-screen flex-col border-r border-slate-200 bg-slate-50 px-3 py-4 transition-all duration-200 ease-in-out md:flex ${
             collapsed ? "w-16" : "w-64"
           }`}
         >
@@ -326,7 +385,7 @@ export function AppShell({
           </button>
         </aside>
 
-        <main className={`flex-1 bg-white/70 px-8 py-10 ${contentClassName ?? ""}`}>{children}</main>
+        <main className={`min-w-0 flex-1 bg-white/70 px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top)+3.5rem)] md:px-8 md:py-10 ${contentClassName ?? ""}`}>{children}</main>
       </div>
     </div>
   );

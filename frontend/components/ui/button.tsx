@@ -15,9 +15,9 @@ const buttonVariants = cva(
         ghost: "hover:bg-slate-100"
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 px-3",
-        icon: "h-9 w-9"
+        default: "h-11 px-4 py-2 md:h-10",
+        sm: "h-10 px-3 md:h-9",
+        icon: "h-11 w-11 md:h-9 md:w-9"
       }
     },
     defaultVariants: {

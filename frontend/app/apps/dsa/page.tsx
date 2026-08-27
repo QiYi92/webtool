@@ -28,7 +28,7 @@ export default function DsaPage() {
 
   return (
     <AuthGuard>
-      <AppShell contentClassName="overflow-hidden !p-0" shellClassName="h-screen overflow-hidden">
+      <AppShell contentClassName="overflow-hidden !p-0" shellClassName="h-screen overflow-hidden" mobileNavigationMode="floating">
         <main className="h-screen min-h-[620px]">
           {error ? (
             <div className="flex h-full items-center justify-center bg-rose-50 p-5 text-sm text-rose-700">

@@ -242,7 +242,14 @@ export default function PermissionsPage() {
                 </Button>
               </div>
             ) : (
-              <Table>
+              <div className="space-y-3">
+              <div className="md:hidden">
+                {filteredUsers.map((user) => {
+                  const disabled = user.role_group === "admin";
+                  return <article key={user.id} className="rounded-xl border border-slate-200 p-4"><div className="font-medium text-slate-900">{user.username}</div><div className="mt-1 break-all text-sm text-slate-500">{user.email}</div><div className="mt-2 text-sm text-slate-600">权限组：{user.role_group}</div><div className="mt-3 flex gap-2"><Button variant="outline" size="sm" disabled={disabled} onClick={() => openEdit(user)}>编辑</Button><Button variant="outline" size="sm" disabled={disabled} className={disabled ? "cursor-not-allowed text-slate-400" : "text-red-600"} onClick={() => openDelete(user)}><Trash2 className="h-4 w-4" />删除</Button></div></article>;
+                })}
+              </div>
+              <div className="hidden md:block"><Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>账号</TableHead>
@@ -287,7 +294,8 @@ export default function PermissionsPage() {
                     );
                   })}
                 </TableBody>
-              </Table>
+              </Table></div>
+              </div>
             )}
           </CardContent>
         </Card>

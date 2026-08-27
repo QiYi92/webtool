@@ -162,7 +162,7 @@ export function AnimeGuidePage() {
             <span className="text-xs text-slate-400">{crawlTimeLabel}</span>
           </div>
         </div>
-        <div className="flex min-h-[calc(100vh-140px)] flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col gap-5 lg:min-h-[calc(100vh-140px)] lg:gap-6 lg:flex-row">
           <section className="flex min-h-0 w-full flex-col gap-4 lg:w-[340px] lg:shrink-0">
             <MiniCalendar
               selectedDate={selectedDate}

@@ -1,8 +1,9 @@
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import "./globals.css";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "二进制伽利略的工具站",
   description: "二进制伽利略的工具站",
   icons: {
@@ -10,6 +11,12 @@ export const metadata = {
     shortcut: "/images/logo.png",
     apple: "/images/logo.png"
   }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover"
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

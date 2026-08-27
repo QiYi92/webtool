@@ -271,7 +271,7 @@ export function ToolsGrid() {
         <p className="text-sm text-slate-500">选择一个工具开始使用</p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         {tools.map((tool) => {
           const Icon = tool.icon;
           const isAnimeGuide = tool.key === "anime-guide";
@@ -352,7 +352,7 @@ export function ToolsGrid() {
                 )}
               </CardContent>
               {isAnimeGuide && (
-                <div className="pointer-events-none absolute inset-y-4 right-4 w-[124px] overflow-hidden rounded-md border border-slate-200 bg-slate-100">
+                <div className="pointer-events-none absolute inset-y-4 right-4 hidden w-[124px] overflow-hidden rounded-md border border-slate-200 bg-slate-100 sm:block">
                   {animeGuideCount === null ? (
                     <div className="h-full w-full animate-pulse bg-slate-200" />
                   ) : currentAnime?.coverUrl ? (

@@ -62,6 +62,21 @@ describe('SidebarNav', () => {
     expect(hrefs.slice(0, 5)).toEqual(['/', '/chat', '/screening', '/portfolio', '/decision-signals']);
   });
 
+  it('groups routes into navigation, applications, and system settings', async () => {
+    mockGetScreeningStatus.mockResolvedValueOnce({ enabled: true, available: true });
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <SidebarNav />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: '导航' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '应用' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '系统设置' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: '选股' })).toHaveAttribute('href', '/screening');
+  });
+
   it('refreshes the controlled screening entry after config changes', async () => {
     mockGetScreeningStatus
       .mockResolvedValueOnce({ enabled: false, available: true })

@@ -96,7 +96,7 @@ export default function AIWorkflowDetailPage({
             {error}
           </div>
         ) : workflow ? (
-          <div className="flex h-[calc(100vh-180px)] min-h-[700px] overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex h-[calc(100dvh-9rem)] min-h-[420px] overflow-hidden rounded-xl border border-slate-200 bg-white md:h-[calc(100vh-180px)] md:min-h-[700px]">
             <iframe
               src={buildIframeUrl(workflow.url, newConversationId)}
               className="h-full w-full border-0"

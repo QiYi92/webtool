@@ -606,7 +606,7 @@ export default function InvestmentPredictionPage() {
                   onValueChange={setSelectedStrategy}
                   disabled={loading || running || starting || strategies.length === 0}
                 >
-                  <SelectTrigger className="w-[220px]" aria-label="选择预测策略">
+                  <SelectTrigger className="w-full sm:w-[220px]" aria-label="选择预测策略">
                     <SelectValue placeholder="选择策略" />
                   </SelectTrigger>
                   <SelectContent>
@@ -660,8 +660,8 @@ export default function InvestmentPredictionPage() {
               </div>
             ) : null}
 
-            <div className="flex min-h-[600px] flex-col gap-6 xl:h-[calc(100vh-260px)] xl:flex-row">
-              <section className="flex min-h-[420px] basis-2/5 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+            <div className="flex flex-col gap-5 xl:h-[calc(100vh-260px)] xl:flex-row xl:gap-6">
+              <section className="flex min-h-[360px] basis-2/5 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm md:min-h-[420px]">
                 <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
                   <span>状态：{STATUS_LABELS[statusData.status]}</span>
                   <span>策略：{statusData.strategy || selectedStrategy || "—"}</span>
@@ -680,7 +680,7 @@ export default function InvestmentPredictionPage() {
                 </pre>
               </section>
 
-              <section className="flex min-h-[420px] basis-3/5 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-emerald-50 to-white p-4 shadow-sm">
+              <section className="flex min-h-[360px] basis-3/5 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-emerald-50 to-white p-4 shadow-sm md:min-h-[420px]">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="text-sm font-medium text-slate-800">
@@ -781,6 +781,10 @@ export default function InvestmentPredictionPage() {
                 {rightView === "history" ? (
                   <>
                     <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-slate-200 bg-white">
+                      <div className="space-y-2 p-2 md:hidden">
+                        {historyLoading ? <p className="p-4 text-center text-sm text-slate-500">历史任务加载中...</p> : (historyData?.items.length ?? 0) === 0 ? <p className="p-4 text-center text-sm text-slate-500">暂无历史预测</p> : historyData?.items.map((item) => <button key={item.id} type="button" onClick={() => historySelectionMode ? toggleHistoryTaskSelection(item.id) : void loadHistoryDetail(item)} className={`w-full rounded-lg border p-3 text-left ${historySelectionMode && selectedHistoryTaskIds.has(item.id) ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}><div className="flex items-center justify-between gap-2"><span className="font-mono text-sm font-medium">{item.id.slice(0, 8)}</span>{historySelectionMode ? <input type="checkbox" checked={selectedHistoryTaskIds.has(item.id)} disabled={running && item.id === statusData.task?.id} onClick={(event) => event.stopPropagation()} onChange={() => toggleHistoryTaskSelection(item.id)} className="h-4 w-4 accent-rose-600" aria-label={`选择任务 ${item.id.slice(0, 8)}`} /> : <span className={`text-sm ${TASK_STATUS_STYLES[item.status]}`}>{STATUS_LABELS[item.status]}</span>}</div><div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500"><span>开始：{formatDateTime(item.started_at)}</span><span>命中：{item.hit_count}</span><span>类型：{TASK_TYPE_LABELS[item.task_type]}</span><span>结束：{formatDateTime(item.finished_at)}</span></div></button>)}
+                      </div>
+                      <div className="hidden md:block">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -871,6 +875,7 @@ export default function InvestmentPredictionPage() {
                           )}
                         </TableBody>
                       </Table>
+                      </div>
                     </div>
                     <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
                       <Button
@@ -896,6 +901,10 @@ export default function InvestmentPredictionPage() {
                   </>
                 ) : (
                   <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-slate-200 bg-white">
+                    <div className="space-y-2 p-2 md:hidden">
+                      {(rightView === "latest" ? loading : historyDetailLoading) ? <p className="p-4 text-center text-sm text-slate-500">结果加载中...</p> : (rightView === "latest" ? results : historyResults).length === 0 ? <p className="p-4 text-center text-sm text-slate-500">暂无命中结果</p> : (rightView === "latest" ? results : historyResults).map((item) => <article key={`${item.stock_code}-${item.bowl_stage}`} className="rounded-lg border border-slate-200 p-3"><div className="flex items-center justify-between gap-2"><span className="font-mono font-medium text-slate-900">{item.stock_code}</span><span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">{item.bowl_stage}</span></div><div className="mt-2 text-sm font-medium text-slate-800">{item.stock_name}</div><div className="mt-1 text-xs text-slate-500">{item.stock_category} · {item.sector}</div></article>)}
+                    </div>
+                    <div className="hidden md:block">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -944,6 +953,7 @@ export default function InvestmentPredictionPage() {
                         )}
                       </TableBody>
                     </Table>
+                    </div>
                   </div>
                 )}
               </section>
@@ -952,14 +962,14 @@ export default function InvestmentPredictionPage() {
         </Card>
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogContent className="max-w-4xl p-0">
-            <div className="flex min-h-[520px]">
-              <aside className="w-48 shrink-0 border-r border-slate-200 bg-slate-50 p-4">
+            <div className="flex min-h-[520px] flex-col sm:flex-row">
+              <aside className="border-b border-slate-200 bg-slate-50 p-3 sm:w-48 sm:shrink-0 sm:border-b-0 sm:border-r sm:p-4">
                 <div className="mb-5 px-3 text-sm font-semibold text-slate-700">设置</div>
-                <div className="space-y-1">
+                <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
                   <button
                     type="button"
                     onClick={() => setSettingsSection("filters")}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${
+                    className={`shrink-0 rounded-lg px-3 py-2 text-left text-sm transition sm:w-full ${
                       settingsSection === "filters"
                         ? "bg-slate-900 font-medium text-white"
                         : "text-slate-600 hover:bg-slate-200"
@@ -970,7 +980,7 @@ export default function InvestmentPredictionPage() {
                   <button
                     type="button"
                     onClick={() => setSettingsSection("schedule")}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${
+                    className={`shrink-0 rounded-lg px-3 py-2 text-left text-sm transition sm:w-full ${
                       settingsSection === "schedule"
                         ? "bg-slate-900 font-medium text-white"
                         : "text-slate-600 hover:bg-slate-200"
@@ -980,7 +990,7 @@ export default function InvestmentPredictionPage() {
                   </button>
                 </div>
               </aside>
-              <div className="flex min-w-0 flex-1 flex-col p-7">
+              <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-7">
                 {settingsSection === "filters" ? (
                   <>
                     <DialogHeader>

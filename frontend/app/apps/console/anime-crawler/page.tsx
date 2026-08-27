@@ -269,8 +269,8 @@ export default function AnimeCrawlerConsolePage() {
                 {error}
               </div>
             ) : null}
-            <div className="flex h-[calc(100vh-250px)] min-h-[560px] flex-col gap-6 lg:flex-row">
-              <section className="flex basis-2/3 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+            <div className="flex flex-col gap-5 lg:h-[calc(100vh-250px)] lg:min-h-[560px] lg:flex-row lg:gap-6">
+              <section className="flex min-h-[360px] basis-2/3 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm lg:min-h-0">
                 <div className="mb-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
                   {loadingLatest ? (
                     "最新日志加载中..."
@@ -294,6 +294,10 @@ export default function AnimeCrawlerConsolePage() {
 
               <section className="flex basis-1/3 flex-col rounded-xl border border-slate-200 bg-gradient-to-b from-emerald-50 to-white p-4 shadow-sm">
                 <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-slate-200 bg-white">
+                  <div className="space-y-2 p-2 md:hidden">
+                    {loadingList ? <p className="p-3 text-center text-sm text-slate-500">列表加载中...</p> : (listData?.items.length ?? 0) === 0 ? <p className="p-3 text-center text-sm text-slate-500">暂无记录</p> : listData?.items.map((item, index) => <button key={item.id} type="button" onClick={() => loadLogById(item.id)} className={`w-full rounded-lg border p-3 text-left text-sm ${selectedLogId === item.id ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"}`}><div className="flex justify-between gap-2 font-medium text-slate-800"><span>#{(page - 1) * PAGE_SIZE + index + 1} · {RUN_TYPE_CN[item.run_type]}</span><span>{STATUS_CN[item.status]}</span></div><div className="mt-1 text-xs text-slate-500">结束：{formatDateTime(item.finished_at)}</div></button>)}
+                  </div>
+                  <div className="hidden md:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -334,6 +338,7 @@ export default function AnimeCrawlerConsolePage() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
                 <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-4">
                   <Button variant="outline" size="sm" onClick={handlePrev} disabled={page <= 1}>
