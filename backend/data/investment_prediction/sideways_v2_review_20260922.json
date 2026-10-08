@@ -1,0 +1,1456 @@
+{
+  "来源报告": "backend/data/investment_prediction/2bf078c8-11f4-4573-969b-3df28007d754.xlsx",
+  "规则版本": "sideways_v2",
+  "原横盘数量": 131,
+  "结果统计": {
+    "保留": 0,
+    "淘汰": 0,
+    "未验证": 131
+  },
+  "首个失败环节": {},
+  "股票": [
+    {
+      "股票代码": "920185",
+      "股票名称": "贝特瑞",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 920185 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "603927",
+      "股票名称": "中科软",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 603927 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "603899",
+      "股票名称": "晨光股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 603899 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "603868",
+      "股票名称": "飞科电器",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 603868 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "603529",
+      "股票名称": "爱玛科技",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 603529 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601992",
+      "股票名称": "金隅集团",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601992 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601990",
+      "股票名称": "南京证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601990 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601881",
+      "股票名称": "中国银河",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601881 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601880",
+      "股票名称": "辽港股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601880 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601878",
+      "股票名称": "浙商证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601878 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601877",
+      "股票名称": "正泰电器",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601877 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601866",
+      "股票名称": "中远海发",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601866 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601808",
+      "股票名称": "中海油服",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601808 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601800",
+      "股票名称": "中国交建",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601800 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601788",
+      "股票名称": "光大证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601788 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601727",
+      "股票名称": "上海电气",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601727 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601696",
+      "股票名称": "中银证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601696 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601688",
+      "股票名称": "华泰证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601688 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601618",
+      "股票名称": "中国中冶",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601618 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601600",
+      "股票名称": "中国铝业",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601600 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601456",
+      "股票名称": "国联民生",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601456 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601399",
+      "股票名称": "国机重装",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601399 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601390",
+      "股票名称": "中国中铁",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601390 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601377",
+      "股票名称": "兴业证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601377 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601336",
+      "股票名称": "新华保险",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601336 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601236",
+      "股票名称": "红塔证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601236 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601216",
+      "股票名称": "君正集团",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601216 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601186",
+      "股票名称": "中国铁建",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601186 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601162",
+      "股票名称": "天风证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601162 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601117",
+      "股票名称": "中国化学",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601117 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601099",
+      "股票名称": "太平洋",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601099 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601068",
+      "股票名称": "中铝国际",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601068 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601006",
+      "股票名称": "大秦铁路",
+      "截止日": "2026-09-21",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601006 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "601005",
+      "股票名称": "重庆钢铁",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 601005 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600995",
+      "股票名称": "南网储能",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600995 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600970",
+      "股票名称": "中材国际",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600970 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600968",
+      "股票名称": "海油发展",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600968 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600959",
+      "股票名称": "江苏有线",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600959 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600958",
+      "股票名称": "东方证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600958 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600956",
+      "股票名称": "新天绿能",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600956 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600918",
+      "股票名称": "中泰证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600918 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600871",
+      "股票名称": "石化油服",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600871 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600867",
+      "股票名称": "通化东宝",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600867 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600862",
+      "股票名称": "中航高科",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600862 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600859",
+      "股票名称": "王府井",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600859 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600848",
+      "股票名称": "上海临港",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600848 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600839",
+      "股票名称": "四川长虹",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600839 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600835",
+      "股票名称": "上海机电",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600835 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600820",
+      "股票名称": "隧道股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600820 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600816",
+      "股票名称": "建元信托",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600816 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600808",
+      "股票名称": "马钢股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600808 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600787",
+      "股票名称": "中储股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600787 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600777",
+      "股票名称": "新潮能源",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600777 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600765",
+      "股票名称": "中航重机",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600765 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600755",
+      "股票名称": "厦门国贸",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600755 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600720",
+      "股票名称": "中交设计",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600720 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600688",
+      "股票名称": "上海石化",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600688 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600660",
+      "股票名称": "福耀玻璃",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600660 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600655",
+      "股票名称": "豫园股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600655 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600635",
+      "股票名称": "大众公用",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600635 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600618",
+      "股票名称": "氯碱化工",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600618 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600585",
+      "股票名称": "海螺水泥",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600585 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600575",
+      "股票名称": "淮河能源",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600575 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600548",
+      "股票名称": "深高速",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600548 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600528",
+      "股票名称": "中铁工业",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600528 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600518",
+      "股票名称": "康美药业",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600518 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600517",
+      "股票名称": "国网英大",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600517 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600515",
+      "股票名称": "海南机场",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600515 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600509",
+      "股票名称": "天富能源",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600509 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600486",
+      "股票名称": "扬农化工",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600486 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600420",
+      "股票名称": "国药现代",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600420 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600390",
+      "股票名称": "五矿资本",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600390 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600372",
+      "股票名称": "中航机载",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600372 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600361",
+      "股票名称": "创新新材",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600361 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600339",
+      "股票名称": "中油工程",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600339 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600320",
+      "股票名称": "振华重工",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600320 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600271",
+      "股票名称": "航天信息",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600271 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600258",
+      "股票名称": "首旅酒店",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600258 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600248",
+      "股票名称": "陕建股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600248 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600171",
+      "股票名称": "上海贝岭",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600171 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600170",
+      "股票名称": "上海建工",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600170 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600167",
+      "股票名称": "联美控股",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600167 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600161",
+      "股票名称": "天坛生物",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600161 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600157",
+      "股票名称": "永泰能源",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600157 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600109",
+      "股票名称": "国金证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600109 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600100",
+      "股票名称": "同方股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600100 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600061",
+      "股票名称": "国投资本",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600061 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600029",
+      "股票名称": "南方航空",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600029 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600023",
+      "股票名称": "浙能电力",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600023 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600022",
+      "股票名称": "山东钢铁",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600022 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600019",
+      "股票名称": "宝钢股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600019 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600010",
+      "股票名称": "包钢股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600010 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600009",
+      "股票名称": "上海机场",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600009 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600006",
+      "股票名称": "东风股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600006 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600004",
+      "股票名称": "白云机场",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600004 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "600000",
+      "股票名称": "浦发银行",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 600000 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002911",
+      "股票名称": "佛燃能源",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002911 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002797",
+      "股票名称": "第一创业",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002797 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002736",
+      "股票名称": "国信证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002736 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002690",
+      "股票名称": "美亚光电",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002690 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002675",
+      "股票名称": "东诚药业",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002675 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002673",
+      "股票名称": "西部证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002673 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002608",
+      "股票名称": "江苏国信",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002608 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002600",
+      "股票名称": "领益智造",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002600 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002500",
+      "股票名称": "山西证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002500 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002340",
+      "股票名称": "格林美",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002340 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002252",
+      "股票名称": "上海莱士",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002252 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002236",
+      "股票名称": "大华股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002236 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002183",
+      "股票名称": "怡 亚 通",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002183 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002179",
+      "股票名称": "中航光电",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002179 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002096",
+      "股票名称": "易普力",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002096 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "002091",
+      "股票名称": "江苏国泰",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 002091 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000987",
+      "股票名称": "越秀资本",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000987 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000927",
+      "股票名称": "中国铁物",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000927 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000898",
+      "股票名称": "鞍钢股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000898 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000877",
+      "股票名称": "天山股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000877 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000825",
+      "股票名称": "太钢不锈",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000825 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000810",
+      "股票名称": "创维数字",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000810 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000800",
+      "股票名称": "一汽解放",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000800 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000778",
+      "股票名称": "新兴铸管",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000778 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000750",
+      "股票名称": "国海证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000750 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000733",
+      "股票名称": "振华科技",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000733 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000727",
+      "股票名称": "冠捷科技",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000727 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000709",
+      "股票名称": "河钢股份",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000709 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000686",
+      "股票名称": "东北证券",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000686 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000683",
+      "股票名称": "博源化工",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000683 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000591",
+      "股票名称": "太阳能",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000591 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000563",
+      "股票名称": "陕国投Ａ",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000563 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000050",
+      "股票名称": "深天马Ａ",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000050 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000027",
+      "股票名称": "深圳能源",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000027 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    },
+    {
+      "股票代码": "000012",
+      "股票名称": "南  玻Ａ",
+      "截止日": "2026-09-22",
+      "结果": "未验证",
+      "指标": {
+        "未通过环节": "长期数据",
+        "未通过原因": "获取前复权日 K 000012 连续失败 1 次: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+        "规则版本": "sideways_v2"
+      }
+    }
+  ],
+  "复核日期": "2026-09-23",
+  "说明": "只复核旧横盘名单的新增规则；131只均未取得长期行情，无法评价实际保留比例。"
+}

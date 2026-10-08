@@ -92,3 +92,14 @@ class PredictionScheduleSettings(BaseModel):
     enabled: bool = False
     hour: int = Field(default=9, ge=0, le=23)
     minute: int = Field(default=0, ge=0, le=59)
+
+
+class AKShareStatusResponse(BaseModel):
+    installed_version: str
+    latest_version: str | None = None
+    last_checked_at: datetime | None = None
+    interface_status: str = "未检查"
+    interface_checked_at: datetime | None = None
+    upgrade_status: str = "无待升级版本"
+    candidate_version: str | None = None
+    last_error: str | None = None

@@ -22,6 +22,7 @@ coverage/
 backend/.venv/
 __pycache__/
 *.py[cod]
+backend/data/investment_prediction/akshare/
 
 # Logs
 *.log

@@ -18,6 +18,16 @@ from app.services import investment_prediction_service as service
 
 
 class InvestmentPredictionServiceTests(unittest.TestCase):
+    def test_bottom_strategy_preserves_required_filters_and_stage(self):
+        overrides = service.build_filter_config_overrides(
+            {key: False for key in service.DEFAULT_FILTER_SETTINGS}, "default_bottom"
+        )
+        self.assertEqual(set(overrides["basic"]), {"excluded_board_prefixes", "enable_listing_filter"})
+        self.assertIn("default_bottom", service.list_strategies())
+        for stage in ("横盘未突破", "出现转强"):
+            rows = service._result_rows(pd.DataFrame([{"股票代码": "002531", "碗型阶段": stage}]))
+            self.assertEqual(rows[0]["bowl_stage"], stage)
+
     def test_strategy_discovery_and_validation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -188,6 +198,28 @@ class InvestmentPredictionApiTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 401)
         self.assertEqual(delete_response.status_code, 401)
+
+    def test_market_data_status_is_authenticated_and_returns_versions(self) -> None:
+        value = {
+            "installed_version": "1.18.97",
+            "latest_version": "1.18.98",
+            "last_checked_at": "2026-09-24T06:00:00+00:00",
+            "interface_status": "通过",
+            "interface_checked_at": "2026-09-24T06:00:03+00:00",
+            "upgrade_status": "升级待生效：预测任务运行中",
+            "candidate_version": "1.18.98",
+            "last_error": None,
+        }
+        with patch.object(api, "get_akshare_status", return_value=value), self.build_client("member") as client:
+            response = client.get("/tools/investment-prediction/market-data/status")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["installed_version"], "1.18.97")
+        self.assertEqual(response.json()["latest_version"], "1.18.98")
+
+    def test_anonymous_market_data_status_is_rejected(self) -> None:
+        with self.build_client(None) as client:
+            response = client.get("/tools/investment-prediction/market-data/status")
+        self.assertEqual(response.status_code, 401)
 
     def test_running_task_returns_conflict(self) -> None:
         with (

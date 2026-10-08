@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.security import get_current_user
 from app.schemas.investment_prediction import (
+    AKShareStatusResponse,
     PredictionLogResponse,
     PredictionResultsResponse,
     PredictionRunRequest,
@@ -17,6 +18,7 @@ from app.schemas.investment_prediction import (
     PredictionTasksDeleteRequest,
     PredictionTasksDeleteResponse,
 )
+from app.services.akshare_update_service import get_akshare_status
 from app.services.investment_prediction_service import (
     delete_task_artifacts,
     delete_tasks,
@@ -37,6 +39,14 @@ router = APIRouter(
     prefix="/tools/investment-prediction",
     tags=["investment-prediction"],
 )
+
+
+@router.get("/market-data/status", response_model=AKShareStatusResponse)
+def get_market_data_status(
+    current_user: dict = Depends(get_current_user),
+) -> AKShareStatusResponse:
+    del current_user
+    return AKShareStatusResponse(**get_akshare_status())
 
 
 @router.get("/strategies", response_model=PredictionStrategiesResponse)

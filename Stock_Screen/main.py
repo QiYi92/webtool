@@ -116,7 +116,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--use-proxy",
         action="store_true",
-        help="使用当前终端代理；默认关闭代理以减少行情接口连接失败",
+        help="兼容旧命令；默认已使用当前终端的 HTTP/HTTPS 代理环境变量",
+    )
+    parser.add_argument(
+        "--no-proxy",
+        action="store_true",
+        help="忽略当前终端代理环境变量，直接连接行情接口",
     )
     return parser.parse_args()
 
@@ -165,7 +170,7 @@ def main() -> None:
         sector_keyword=sector_keyword,
         sleep_seconds=args.sleep,
         enable_bowl_filter=enable_bowl_filter,
-        use_proxy=args.use_proxy,
+        use_proxy=not args.no_proxy,
     )
 
 

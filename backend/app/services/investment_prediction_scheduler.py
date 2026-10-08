@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -10,6 +11,7 @@ from app.services.investment_prediction_service import (
     list_strategies,
     prediction_task_manager,
 )
+from app.services.akshare_update_service import activate_if_idle, check_and_update_akshare, get_akshare_status
 
 
 SCHEDULE_JOB_ID = "investment-prediction-daily"
@@ -68,7 +70,41 @@ def start_prediction_scheduler() -> None:
     if _scheduler is not None:
         return
     _scheduler = BackgroundScheduler(timezone=SCHEDULE_TIMEZONE)
+    _scheduler.add_job(
+        check_and_update_akshare,
+        CronTrigger(hour=6, minute=0, timezone=SCHEDULE_TIMEZONE),
+        id="akshare-daily-check",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+    )
+    _scheduler.add_job(
+        activate_if_idle,
+        "interval",
+        minutes=5,
+        id="akshare-pending-activation",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+    )
     _scheduler.start()
+    status = get_akshare_status()
+    last_checked = status.get("last_checked_at")
+    try:
+        checked_today = (
+            datetime.fromisoformat(last_checked).astimezone(SCHEDULE_TIMEZONE).date()
+            == datetime.now(SCHEDULE_TIMEZONE).date()
+        ) if last_checked else False
+    except (TypeError, ValueError):
+        checked_today = False
+    if not checked_today or status.get("interface_source") != "akshare_tx_v1" or status.get("interface_status") != "通过":
+        _scheduler.add_job(
+            check_and_update_akshare,
+            "date",
+            run_date=datetime.now(SCHEDULE_TIMEZONE) + timedelta(seconds=3),
+            id="akshare-startup-check",
+            replace_existing=True,
+        )
     try:
         refresh_prediction_schedule()
     except Exception:

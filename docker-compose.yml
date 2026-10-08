@@ -39,10 +39,13 @@ services:
     environment:
       CORS_ALLOW_ORIGINS: ${FRONTEND_PUBLIC_ORIGIN:-http://localhost:3000}
       STOCK_SCREEN_ROOT: /opt/stock_screen
+      AKSHARE_STATE_DIR: /app/data/investment_prediction/akshare
+      AKSHARE_AUTO_RESTART: "true"
     ports:
       - "8888:8888"
     volumes:
       - ./backend/logs:/app/logs
+      - ./backend/data/investment_prediction/akshare:/app/data/investment_prediction/akshare
       # 策略源码随本仓库发布，容器内保持稳定的应用路径。
       - ./Stock_Screen:/opt/stock_screen:ro
     # 让容器可通过 host.docker.internal 访问宿主机代理。

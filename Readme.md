@@ -444,7 +444,7 @@ npm run dev
 cd backend
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8888
+.venv/bin/uvicorn app.main:app --reload --reload-dir . --reload-dir ../Stock_Screen --host 0.0.0.0 --port 8888
 ```
 
 ### 现有功能说明（最小可运行）
@@ -480,12 +480,15 @@ backend 时自动读取该目录，Docker Compose 也会将其只读挂载到
 - 历史详情和最新筛选结果均可下载原始 `.xlsx` 报告。报告是 `Stock_Screen` 生成的原文件，保存路径为 `backend/data/investment_prediction/{task_id}.xlsx`，保留原有工作表和格式。
 - 齿轮设置页分为“预测筛选设置”和“定时设置”。定时设置支持每天指定时分（北京时间）执行一次默认碗形策略；调度由后端 APScheduler 执行，浏览器关闭后仍有效。
 - 同一时刻全站只允许一个预测任务运行；定时任务遇到已有运行任务会跳过本次执行。
+- 股票列表、个股资料和历史行情由 AKShare 适配层统一提供；当前使用腾讯实时列表、交易所上市资料、巨潮个股资料、腾讯沪深日线及新浪北交所日线。后端每天北京时间 06:00 检查 AKShare 最新发布版本，启动当天尚未检查时会补查，并对模型依赖的行情接口运行真实冒烟测试；候选版本验证通过后，在预测任务空闲时切换并重启后端。失败时继续使用当前版本。
+- AKShare 当前/最新版本、接口检查时间和升级状态显示在“模型预测”卡片右侧；版本状态保存在 `backend/data/investment_prediction/akshare/`，Docker Compose 会持久化该目录。
 
 | 接口 | 说明 |
 | --- | --- |
 | `GET /tools/investment-prediction/strategies` | 获取可用策略 |
 | `POST /tools/investment-prediction/run` | 手动启动预测 |
 | `GET /tools/investment-prediction/status` | 获取最近任务及实时状态 |
+| `GET /tools/investment-prediction/market-data/status` | 获取 AKShare 版本、接口检查时间和升级状态 |
 | `GET /tools/investment-prediction/tasks` | 分页查询历史任务 |
 | `DELETE /tools/investment-prediction/tasks` | 删除历史任务及其日志、报告 |
 | `GET /tools/investment-prediction/tasks/{task_id}/log` | 获取任务日志 |

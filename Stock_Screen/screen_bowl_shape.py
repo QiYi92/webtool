@@ -8,16 +8,48 @@ import os
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any
+from zoneinfo import ZoneInfo
+
+from akshare_data import (
+    AKShareConnectionError,
+    AKShareDataError,
+    fetch_stock_history,
+    fetch_stock_info,
+    fetch_stock_spot,
+    version as akshare_version,
+)
 
 import numpy as np
 import pandas as pd
 import requests
 
 from excel_exporter import export_sector_summary_excel
+from bottom_model import completed_daily_bars, evaluate_bottom
+from sideways_model import STAGES as SIDEWAYS_STAGES, evaluate_sideways
+from sideways_data import HistoryDataError, fetch_sideways_history
 
 
-T = TypeVar("T")
+class MarketDataConnectionError(RuntimeError):
+    """行情接口不可用；必须终止任务，不能把网络故障当成筛选结果。"""
+
+
+def is_market_data_connection_error(exc: BaseException) -> bool:
+    """识别被多层 RuntimeError 包装的 requests 网络/HTTP 错误。"""
+    pending = [exc]
+    visited: set[int] = set()
+    while pending:
+        current = pending.pop()
+        if id(current) in visited:
+            continue
+        visited.add(id(current))
+        if isinstance(current, (requests.RequestException, MarketDataConnectionError, AKShareConnectionError)):
+            return True
+        if current.__cause__ is not None:
+            pending.append(current.__cause__)
+        if current.__context__ is not None:
+            pending.append(current.__context__)
+    return False
 
 MIN_MARKET_VALUE = 10_000_000_000
 MIN_LISTED_DAYS = 365 * 3
@@ -30,33 +62,12 @@ OUTPUT_DIR = "data"
 CACHE_DIR = Path(OUTPUT_DIR) / "cache"
 DEFAULT_CONFIG_PATH = Path("configs") / "default_bowl.json"
 UNKNOWN_SECTOR = "未分类"
-MAX_REQUEST_RETRIES = 3
-STOCK_LIST_NODE_ROUNDS = 2
-STOCK_LIST_RETRY_BASE_SECONDS = 1.0
 DEFAULT_ENABLE_BOWL_FILTER = True
 DEFAULT_SECTOR_KEYWORD = None
 EXCLUDED_BOARD_PREFIXES = ("300", "301", "302", "688", "689")
 PREV_VOLUME_STABLE_RATIO = 1.80
 LATEST_VOLUME_TO_PREV_AVG_RATIO = 1.01
 YESTERDAY_VOLUME_TO_PREV2_AVG_RATIO = 1.35
-EASTMONEY_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0 Safari/537.36"
-    ),
-    "Referer": "https://quote.eastmoney.com/center/gridlist.html",
-    "Accept": "application/json,text/plain,*/*",
-    "Connection": "close",
-}
-EASTMONEY_STOCK_LIST_URLS = (
-    "https://82.push2.eastmoney.com/api/qt/clist/get",
-    "https://push2.eastmoney.com/api/qt/clist/get",
-    "https://push2delay.eastmoney.com/api/qt/clist/get",
-    "http://82.push2.eastmoney.com/api/qt/clist/get",
-    "http://push2.eastmoney.com/api/qt/clist/get",
-    "http://push2delay.eastmoney.com/api/qt/clist/get",
-)
 PROXY_ENV_KEYS = (
     "HTTP_PROXY",
     "HTTPS_PROXY",
@@ -163,99 +174,23 @@ def load_screen_config(config_path: str | None = None) -> dict[str, Any]:
     return config
 
 
-def configure_network(use_proxy: bool = False) -> None:
-    """默认避开可能失效的系统代理，除非用户显式要求使用代理。"""
-    if use_proxy:
+def configure_network(use_proxy: bool | None = None) -> None:
+    """Direct-connect domestic AKShare sources while preserving other proxies."""
+    if use_proxy is True:
         return
-
-    for key in PROXY_ENV_KEYS:
-        os.environ.pop(key, None)
+    if use_proxy is False:
+        for key in PROXY_ENV_KEYS:
+            os.environ.pop(key, None)
 
     no_proxy_hosts = [
-        "localhost",
-        "127.0.0.1",
-        "*.eastmoney.com",
-        "eastmoney.com",
-        "*.akshare.xyz",
-        "akshare.xyz",
+        "localhost", "127.0.0.1", ".qq.com", ".gtimg.cn", ".sina.com.cn",
+        ".szse.cn", ".sse.com.cn", ".bse.cn", ".cninfo.com.cn",
     ]
     existing_no_proxy = os.environ.get("NO_PROXY") or os.environ.get("no_proxy")
-    if existing_no_proxy:
-        no_proxy_hosts.insert(0, existing_no_proxy)
-
-    no_proxy = ",".join(no_proxy_hosts)
+    entries = [entry.strip() for entry in (existing_no_proxy or "").split(",") if entry.strip()]
+    no_proxy = ",".join(dict.fromkeys(entries + no_proxy_hosts))
     os.environ["NO_PROXY"] = no_proxy
     os.environ["no_proxy"] = no_proxy
-
-
-def call_with_retries(
-    func: Callable[[], T],
-    description: str,
-    max_retries: int = MAX_REQUEST_RETRIES,
-    sleep_seconds: float = 2.0,
-) -> T:
-    """对不稳定的东方财富请求做重试，最后仍失败时再抛出错误。"""
-    last_exc: Exception | None = None
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            return func()
-        except Exception as exc:
-            last_exc = exc
-            if attempt >= max_retries:
-                break
-            logging.warning(
-                "%s 失败，第 %s/%s 次重试: %s",
-                description,
-                attempt,
-                max_retries,
-                exc,
-            )
-            time.sleep(sleep_seconds * (2 ** (attempt - 1)))
-
-    raise RuntimeError(f"{description} 连续失败 {max_retries} 次: {last_exc}") from last_exc
-
-
-def eastmoney_get_json(
-    url: str,
-    params: dict[str, Any],
-    description: str,
-    timeout: float = 15,
-    max_retries: int = MAX_REQUEST_RETRIES,
-) -> dict[str, Any]:
-    """使用接近浏览器的请求头访问东方财富 JSON 接口。"""
-
-    def request_once() -> dict[str, Any]:
-        with requests.Session() as session:
-            session.trust_env = False
-            response = session.get(
-                url,
-                params=params,
-                headers=EASTMONEY_HEADERS,
-                timeout=timeout,
-            )
-            response.raise_for_status()
-            return response.json()
-
-    return call_with_retries(request_once, description, max_retries=max_retries)
-
-
-def generic_get_json(
-    url: str,
-    description: str,
-    timeout: float = 15,
-    max_retries: int = MAX_REQUEST_RETRIES,
-) -> dict[str, Any]:
-    """访问普通 JSON 接口，用于非东方财富备用数据源。"""
-
-    def request_once() -> dict[str, Any]:
-        with requests.Session() as session:
-            session.trust_env = False
-            response = session.get(url, headers=EASTMONEY_HEADERS, timeout=timeout)
-            response.raise_for_status()
-            return response.json()
-
-    return call_with_retries(request_once, description, max_retries=max_retries)
 
 
 def today_cache_path(name: str) -> Path:
@@ -311,181 +246,23 @@ def linear_slope(values: np.ndarray | pd.Series | list[float]) -> float:
     return float(np.polyfit(x, y, 1)[0])
 
 
-def get_market_code(symbol: str) -> int:
-    """东方财富市场代码：沪市为 1，深市和北交所这里按 0 处理。"""
-    return 1 if normalize_symbol(symbol).startswith("6") else 0
-
-
-def fetch_stock_list_page(
-    params: dict[str, Any],
-    page: int,
-    preferred_url: str | None = None,
-    urls: tuple[str, ...] = EASTMONEY_STOCK_LIST_URLS,
-    node_rounds: int = STOCK_LIST_NODE_ROUNDS,
-) -> tuple[dict[str, Any], str]:
-    """逐节点抓取一页股票列表，当前节点失败时自动切换备用节点。"""
-    ordered_urls = list(urls)
-    if preferred_url in ordered_urls:
-        ordered_urls.remove(preferred_url)
-        ordered_urls.insert(0, preferred_url)
-
-    description = f"获取 A 股股票列表第 {page} 页"
-    errors: list[str] = []
-    for round_index in range(node_rounds):
-        for candidate_url in ordered_urls:
-            try:
-                page_json = eastmoney_get_json(
-                    candidate_url,
-                    params,
-                    description,
-                    timeout=10,
-                    max_retries=1,
-                )
-                page_data = page_json.get("data")
-                if not isinstance(page_data, dict):
-                    raise RuntimeError("响应缺少 data 对象")
-                page_records = page_data.get("diff")
-                if not isinstance(page_records, list) or not page_records:
-                    raise RuntimeError("响应缺少有效股票记录")
-                if preferred_url and candidate_url != preferred_url:
-                    logging.warning(
-                        "%s 已从 %s 切换到 %s",
-                        description,
-                        preferred_url,
-                        candidate_url,
-                    )
-                return page_json, candidate_url
-            except Exception as exc:
-                errors.append(f"{candidate_url}: {exc}")
-                logging.warning(
-                    "%s 节点失败（第 %s/%s 轮）%s: %s",
-                    description,
-                    round_index + 1,
-                    node_rounds,
-                    candidate_url,
-                    exc,
-                )
-
-        if round_index + 1 < node_rounds:
-            wait_seconds = STOCK_LIST_RETRY_BASE_SECONDS * (2 ** round_index)
-            logging.warning(
-                "%s 所有节点暂时不可用，%.1f 秒后重试",
-                description,
-                wait_seconds,
-            )
-            time.sleep(wait_seconds)
-
-    recent_errors = " | ".join(errors[-len(ordered_urls):])
-    raise RuntimeError(
-        f"{description} 的所有节点连续失败 {node_rounds} 轮: {recent_errors}"
-    )
-
-
 def fetch_stock_spot_em() -> pd.DataFrame:
-    """从东方财富获取沪深京 A 股实时列表。"""
+    """通过 AKShare 获取当日沪深京 A 股实时列表，失败时停止任务。"""
     cache_path = today_cache_path("stock_spot")
-    base_params = {
-        "pn": "1",
-        "pz": "100",
-        "po": "1",
-        "np": "1",
-        "ut": "bd1d9ddb04089700cf9c27f6f7426281",
-        "fltt": "2",
-        "invt": "2",
-        "fid": "f12",
-        "fs": "m:0 t:6,m:0 t:80,m:1 t:2,m:1 t:23,m:0 t:81 s:2048",
-        "fields": "f2,f12,f14,f20,f26,f100,f103",
-    }
-
     try:
-        first_json, active_url = fetch_stock_list_page(
-            base_params,
-            page=1,
-        )
-        logging.info("A 股股票列表接口使用: %s", active_url)
-
-        data = first_json["data"]
-        diff = data["diff"]
-        total = int(data.get("total") or len(diff))
-        page_size = int(base_params["pz"])
-        total_pages = max(1, int(np.ceil(total / page_size)))
-
-        records = list(diff)
-        for page in range(2, total_pages + 1):
-            params = base_params.copy()
-            params["pn"] = str(page)
-            page_json, active_url = fetch_stock_list_page(
-                params,
-                page=page,
-                preferred_url=active_url,
-            )
-            records.extend(page_json["data"]["diff"])
-            time.sleep(0.2)
+        result_df = fetch_stock_spot()
     except Exception as exc:
-        cached_df = load_cached_df(cache_path)
-        if cached_df is not None:
-            logging.warning("实时股票列表抓取失败，改用当日缓存: %s", exc)
-            return cached_df
-        raise RuntimeError(
-            f"所有 A 股股票列表节点均失败，且没有可用的当日缓存: {exc}"
-        ) from exc
-
-    records_by_code: dict[str, dict[str, Any]] = {}
-    for record in records:
-        if not isinstance(record, dict):
-            continue
-        stock_code = str(record.get("f12") or "").strip()
-        if stock_code:
-            records_by_code[stock_code] = record
-
-    df = pd.DataFrame(records_by_code.values())
-    if df.empty:
-        result_df = pd.DataFrame(columns=["代码", "名称", "最新价", "总市值", "上市时间", "板块", "概念"])
-    else:
-        result_df = pd.DataFrame(
-        {
-            "代码": df.get("f12"),
-            "名称": df.get("f14"),
-            "最新价": df.get("f2"),
-            "总市值": df.get("f20"),
-            "上市时间": df.get("f26"),
-            "板块": df.get("f100"),
-            "概念": df.get("f103"),
-        }
-    )
+        raise MarketDataConnectionError(f"AKShare A 股实时列表不可用，任务已停止：{exc}") from exc
     save_cached_df(result_df, cache_path)
     return result_df
 
 
 def fetch_stock_info_em(symbol: str) -> pd.DataFrame:
-    """从东方财富获取单只股票的基础信息。"""
-    normalized = normalize_symbol(symbol)
-    url = "https://push2.eastmoney.com/api/qt/stock/get"
-    params = {
-        "fltt": "2",
-        "invt": "2",
-        "fields": "f57,f58,f84,f85,f127,f116,f117,f189,f43",
-        "secid": f"{get_market_code(normalized)}.{normalized}",
-    }
-    data_json = eastmoney_get_json(url, params, f"获取个股信息 {normalized}", timeout=10)
-    data = data_json.get("data") or {}
-    code_name_map = {
-        "f57": "股票代码",
-        "f58": "股票简称",
-        "f84": "总股本",
-        "f85": "流通股",
-        "f127": "行业",
-        "f116": "总市值",
-        "f117": "流通市值",
-        "f189": "上市时间",
-        "f43": "最新",
-    }
-    rows = [
-        {"item": item, "value": data.get(field)}
-        for field, item in code_name_map.items()
-        if field in data
-    ]
-    return pd.DataFrame(rows, columns=["item", "value"])
+    """通过 AKShare 获取单只股票基础信息。"""
+    try:
+        return fetch_stock_info(normalize_symbol(symbol))
+    except AKShareConnectionError as exc:
+        raise MarketDataConnectionError(str(exc)) from exc
 
 
 def fetch_stock_hist_em(
@@ -495,135 +272,11 @@ def fetch_stock_hist_em(
     adjust: str = "qfq",
     period: str = "daily",
 ) -> pd.DataFrame:
-    """从东方财富获取历史 K 线数据。"""
-    normalized = normalize_symbol(symbol)
-    adjust_dict = {"qfq": "1", "hfq": "2", "": "0"}
-    period_dict = {"daily": "101", "weekly": "102", "monthly": "103"}
-    url = "http://push2his.eastmoney.com/api/qt/stock/kline/get"
-    params = {
-        "fields1": "f1,f2,f3,f4,f5,f6",
-        "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f116",
-        "ut": "7eea3edcaed734bea9cbfc24409ed989",
-        "klt": period_dict[period],
-        "fqt": adjust_dict[adjust],
-        "secid": f"{get_market_code(normalized)}.{normalized}",
-        "beg": start_date,
-        "end": end_date,
-    }
-    data_json = eastmoney_get_json(url, params, f"获取前复权日 K {normalized}", timeout=10)
-    data = data_json.get("data") or {}
-    klines = data.get("klines") or []
-    if not klines:
-        return pd.DataFrame()
-
-    df = pd.DataFrame([item.split(",") for item in klines])
-    df["股票代码"] = normalized
-    df.columns = [
-        "日期",
-        "开盘",
-        "收盘",
-        "最高",
-        "最低",
-        "成交量",
-        "成交额",
-        "振幅",
-        "涨跌幅",
-        "涨跌额",
-        "换手率",
-        "股票代码",
-    ]
-    return df
-
-
-def get_tencent_symbol(symbol: str) -> str:
-    """把 6 位 A 股代码转换成腾讯行情接口使用的市场前缀代码。"""
-    normalized = normalize_symbol(symbol)
-    if normalized.startswith("6"):
-        return f"sh{normalized}"
-    if normalized.startswith(("4", "8", "9")):
-        return f"bj{normalized}"
-    return f"sz{normalized}"
-
-
-def fetch_stock_hist_tencent(symbol: str, count: int = 45) -> pd.DataFrame:
-    """从腾讯行情获取前复权日 K，作为更稳定的默认 K 线来源。"""
-    tencent_symbol = get_tencent_symbol(symbol)
-    cache_path = today_cache_path(f"kline_{normalize_symbol(symbol)}_{count}")
-    urls = [
-        (
-            "腾讯前复权 K 线",
-            "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
-            f"?param={tencent_symbol},day,,,{count},qfq",
-        ),
-        (
-            "腾讯代理前复权 K 线",
-            "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get"
-            f"?param={tencent_symbol},day,,,{count},qfq",
-        ),
-        (
-            "腾讯普通 K 线",
-            "https://web.ifzq.gtimg.cn/appstock/app/kline/kline"
-            f"?param={tencent_symbol},day,,,{count}",
-        ),
-        (
-            "腾讯代理普通 K 线",
-            "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/kline"
-            f"?param={tencent_symbol},day,,,{count}",
-        ),
-    ]
-
-    errors: list[str] = []
-    klines: list[list[Any]] = []
-    for description, url in urls:
-        try:
-            data_json = generic_get_json(
-                url,
-                f"{description} {symbol}",
-                timeout=10,
-                max_retries=1,
-            )
-            stock_data = (data_json.get("data") or {}).get(tencent_symbol) or {}
-            klines = stock_data.get("qfqday") or stock_data.get("day") or []
-            if klines:
-                logging.debug("%s 使用数据源: %s", symbol, description)
-                break
-            errors.append(f"{description}: 返回空 K 线")
-        except Exception as exc:
-            errors.append(f"{description}: {exc}")
-
-    if not klines:
-        cached_df = load_cached_df(cache_path)
-        if cached_df is not None:
-            return cached_df
-        raise RuntimeError(f"所有腾讯 K 线接口均失败 {symbol}: " + " | ".join(errors))
-
-    df = pd.DataFrame(klines)
-    df = df.iloc[:, :6]
-    df.columns = ["日期", "开盘", "收盘", "最高", "最低", "成交量"]
-    df["股票代码"] = normalize_symbol(symbol)
-    df["成交额"] = np.nan
-    df["振幅"] = np.nan
-    df["涨跌幅"] = np.nan
-    df["涨跌额"] = np.nan
-    df["换手率"] = np.nan
-    result_df = df[
-        [
-            "日期",
-            "股票代码",
-            "开盘",
-            "收盘",
-            "最高",
-            "最低",
-            "成交量",
-            "成交额",
-            "振幅",
-            "涨跌幅",
-            "涨跌额",
-            "换手率",
-        ]
-    ]
-    save_cached_df(result_df, cache_path)
-    return result_df
+    """通过 AKShare 获取统一前复权历史 K 线。"""
+    try:
+        return fetch_stock_history(symbol, start_date, end_date, adjust, period)
+    except AKShareConnectionError as exc:
+        raise MarketDataConnectionError(str(exc)) from exc
 
 
 def get_stock_universe(
@@ -637,10 +290,10 @@ def get_stock_universe(
     basic_config = config["basic"]
     excluded_board_prefixes = tuple(basic_config.get("excluded_board_prefixes") or [])
     df = fetch_stock_spot_em()
-    required = {"代码", "名称", "总市值", "最新价", "上市时间", "板块", "概念"}
+    required = {"代码", "名称", "总市值", "最新价"}
     missing = required - set(df.columns)
     if missing:
-        raise RuntimeError(f"stock_zh_a_spot_em 缺少字段: {missing}")
+        raise RuntimeError(f"AKShare A 股股票列表缺少字段: {missing}")
 
     df = df.copy()
     df["代码"] = df["代码"].map(normalize_symbol)
@@ -660,28 +313,63 @@ def get_stock_universe(
         wanted = {normalize_symbol(symbol) for symbol in symbols}
         df = df[df["代码"].isin(wanted)]
 
-    if sector_keyword:
-        keyword = str(sector_keyword).strip()
-        searchable = (
-            df["名称"].astype(str)
-            + "|"
-            + df["板块"].astype(str)
-            + "|"
-            + df["概念"].astype(str)
-        )
-        df = df[searchable.str.contains(keyword, na=False)]
+    # Exchange listings already provide dates in bulk. Only missing metadata or
+    # an explicit sector search needs a per-stock company profile request.
+    enriched = []
+    for profile_index, (_, row) in enumerate(df.iterrows(), start=1):
+        record = row.to_dict()
+        listing = record.get("上市时间")
+        sector = record.get("板块")
+        missing_listing = listing is None or pd.isna(listing) or not str(listing).strip()
+        missing_sector = sector is None or pd.isna(sector) or not str(sector).strip()
+        if missing_listing or (sector_keyword and missing_sector):
+            try:
+                info = stock_info_to_dict(get_stock_info(record["代码"]))
+            except AKShareConnectionError as exc:
+                raise MarketDataConnectionError(str(exc)) from exc
+            except AKShareDataError as exc:
+                logging.warning("跳过 %s：上市或行业资料不可用: %s", record["代码"], exc)
+                continue
+        else:
+            info = {}
+        if missing_listing:
+            listing = info.get("上市时间")
+        if missing_sector:
+            sector = info.get("行业") or UNKNOWN_SECTOR
+        record["上市时间"] = listing
+        record["板块"] = sector
+        record["概念"] = record.get("概念") or ""
+        if profile_index % 50 == 0 or profile_index == len(df):
+            logging.info("AKShare 股票池整理进度: %s/%s", profile_index, len(df))
+        if info:
+            time.sleep(SLEEP_SECONDS)
+        if sector_keyword:
+            text_value = "|".join(str(record.get(key) or "") for key in ("名称", "板块", "概念"))
+            if str(sector_keyword).strip() not in text_value:
+                continue
+        enriched.append(record)
+    return pd.DataFrame(enriched, columns=["代码", "名称", "总市值", "上市时间", "板块", "概念"]).reset_index(drop=True)
 
-    return df[["代码", "名称", "总市值", "上市时间", "板块", "概念"]].reset_index(drop=True)
+
+def result_sector(symbol: str, sector: str) -> str:
+    """Fill a missing Shanghai industry only for a stock that was selected."""
+    if sector and sector != UNKNOWN_SECTOR:
+        return sector
+    try:
+        return extract_sector(get_stock_info(symbol))
+    except AKShareDataError as exc:
+        logging.warning("命中股票 %s 的行业资料不可用: %s", symbol, exc)
+        return UNKNOWN_SECTOR
 
 
 def get_listing_date(symbol: str) -> pd.Timestamp | None:
-    """从东方财富个股信息中获取上市日期。"""
+    """从 AKShare 个股信息中获取上市日期。"""
     info = get_stock_info(symbol)
     return extract_listing_date(info)
 
 
 def parse_listing_date(raw: Any) -> pd.Timestamp | None:
-    """解析东方财富返回的上市日期，例如 20200101。"""
+    """解析行情资料返回的上市日期，例如 20200101。"""
     if raw is None or pd.isna(raw):
         return None
 
@@ -696,7 +384,7 @@ def parse_listing_date(raw: Any) -> pd.Timestamp | None:
 
 
 def get_stock_info(symbol: str) -> pd.DataFrame:
-    """按股票代码获取一只股票的东方财富基础信息。"""
+    """按股票代码获取一只股票的 AKShare 基础信息。"""
     normalized = normalize_symbol(symbol)
     return fetch_stock_info_em(normalized)
 
@@ -744,17 +432,13 @@ def fetch_daily_k(symbol: str, lookback_days: int = K_LOOKBACK_DAYS) -> pd.DataF
     end_date = datetime.today().strftime("%Y%m%d")
     start_date = (datetime.today() - timedelta(days=lookback_days)).strftime("%Y%m%d")
 
-    try:
-        df = fetch_stock_hist_tencent(symbol=symbol, count=max(45, MIN_K_DAYS + 5))
-    except Exception as exc:
-        logging.warning("腾讯 K 线失败，改用东方财富 K 线 %s: %s", symbol, exc)
-        df = fetch_stock_hist_em(
-            symbol=symbol,
-            period="daily",
-            start_date=start_date,
-            end_date=end_date,
-            adjust="qfq",
-        )
+    df = fetch_stock_hist_em(
+        symbol=symbol,
+        period="daily",
+        start_date=start_date,
+        end_date=end_date,
+        adjust="qfq",
+    )
 
     if df.empty:
         return df
@@ -790,11 +474,6 @@ def normalize_k_df(df: pd.DataFrame) -> pd.DataFrame:
 
 def fetch_recent_k(symbol: str, count: int) -> pd.DataFrame:
     """按交易日数量获取前复权日 K，并标准化日期和数值字段。"""
-    try:
-        return normalize_k_df(fetch_stock_hist_tencent(symbol=symbol, count=count))
-    except Exception as exc:
-        logging.warning("腾讯一年 K 线失败，改用东方财富 K 线 %s: %s", symbol, exc)
-
     end_date = datetime.today().strftime("%Y%m%d")
     start_date = (datetime.today() - timedelta(days=count * 2)).strftime("%Y%m%d")
     return normalize_k_df(
@@ -806,6 +485,69 @@ def fetch_recent_k(symbol: str, count: int) -> pd.DataFrame:
             adjust="qfq",
         )
     )
+
+
+def fetch_bottom_k(symbol: str, count: int, end_date: str) -> pd.DataFrame:
+    """底部模型统一使用 AKShare 前复权日线。"""
+    end = pd.Timestamp(end_date).normalize()
+    df = fetch_stock_hist_em(
+        symbol=symbol, period="daily", adjust="qfq",
+        start_date=(end - pd.Timedelta(days=count * 2)).strftime("%Y%m%d"),
+        end_date=end.strftime("%Y%m%d"),
+    )
+    df = completed_daily_bars(df)
+    if not df.empty:
+        df = df.loc[df["日期"].isna() | (df["日期"] <= end)].copy()
+    return df
+
+
+def fetch_akshare_qfq_history(
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    adjust: str = "qfq",
+    period: str = "daily",
+) -> pd.DataFrame:
+    """兼容旧函数名；五年行情统一由 AKShare 前复权日线接口提供。"""
+    if adjust != "qfq" or period != "daily":
+        raise ValueError("AKShare 长期行情仅支持前复权日线")
+    try:
+        result = fetch_stock_history(symbol, start_date, end_date, adjust, period)
+    except AKShareConnectionError as exc:
+        raise MarketDataConnectionError(str(exc)) from exc
+    result["振幅"] = result.get("振幅", np.nan)
+    result["涨跌幅"] = result.get("涨跌幅", np.nan)
+    result["涨跌额"] = result.get("涨跌额", np.nan)
+    return completed_daily_bars(result)
+
+
+def check_sideways_candidate(symbol: str, short_bars: pd.DataFrame,
+                             listing_date: pd.Timestamp | None, config: dict[str, Any]):
+    """仅在旧模型判定为横盘后调用；长期数据异常不影响转强分支。"""
+    as_of = pd.Timestamp(short_bars["日期"].iloc[-1]).strftime("%Y-%m-%d")
+    start = pd.Timestamp(as_of) - pd.DateOffset(years=config["sideways"]["history_years"])
+    if listing_date is None or pd.isna(listing_date) or pd.Timestamp(listing_date) > start:
+        return evaluate_sideways(pd.DataFrame(), listing_date, as_of, config)
+    try:
+        history = fetch_sideways_history(symbol, as_of, config, fetch_akshare_qfq_history, CACHE_DIR)
+        # 防止两个行情源日期不齐或复权不一致；统一比例缩放不影响模型指标。
+        overlap = short_bars.tail(45).merge(history, on="日期", suffixes=("_short", "_long"))
+        if len(overlap) != 45:
+            raise HistoryDataError("长短行情最近45日不对齐")
+        scale = float(overlap["收盘_long"].iloc[-1]) / float(overlap["收盘_short"].iloc[-1])
+        for field in ("开盘", "收盘", "最高", "最低"):
+            if not np.allclose(overlap[f"{field}_short"].astype(float) * scale,
+                               overlap[f"{field}_long"].astype(float), rtol=.002, atol=.01):
+                raise HistoryDataError("长短行情价格或复权口径不一致")
+        return evaluate_sideways(history, listing_date, as_of, config)
+    except Exception as exc:
+        if is_market_data_connection_error(exc):
+            raise MarketDataConnectionError(
+                f"长期行情接口不可用，任务已停止（{symbol}）：{exc}"
+            ) from exc
+        logging.warning("长期行情未验证 %s: %s", symbol, exc)
+        return False, {"规则版本": config["sideways"]["version"], "未通过环节": "长期数据",
+                       "未通过原因": str(exc), "未验证": True}
 
 
 def is_one_year_uptrend(
@@ -1106,22 +848,24 @@ def build_result_row(
     }
 
 
-def log_filter_stats(stats: dict[str, int]) -> None:
-    """输出本次运行每层筛选的通过和过滤数量。"""
+def log_filter_stats(stats: dict[str, int], *, is_bottom: bool = False) -> None:
+    """两个模型共用统计格式，仅按实际筛选流程选择统计项。"""
+    keys = ["基础过滤后待扫描", "上市时间不足/缺失", "上市时间通过"]
+    if not is_bottom:
+        keys.extend(["一年趋势不通过", "一年趋势通过"])
+    keys.extend(["K线数据不足", "K线数据通过"])
+    if is_bottom:
+        keys.extend(["底部平台不通过", "底部平台通过"])
+        for stage in SIDEWAYS_STAGES:
+            keys.extend([f"{stage}不通过", f"{stage}通过"])
+        keys.extend(["长期数据未验证", "横盘未突破", "出现转强"])
+    else:
+        keys.extend(["成交量不通过", "成交量通过", "碗型不通过", "碗型通过"])
+    keys.extend(["接口异常/其他异常", "最终命中"])
+
     logging.info("========== 筛选统计 ==========")
-    logging.info("基础过滤后待扫描: %s", stats["基础过滤后待扫描"])
-    logging.info("上市时间不足/缺失: %s", stats["上市时间不足/缺失"])
-    logging.info("上市时间通过: %s", stats["上市时间通过"])
-    logging.info("一年趋势不通过: %s", stats["一年趋势不通过"])
-    logging.info("一年趋势通过: %s", stats["一年趋势通过"])
-    logging.info("K线数据不足: %s", stats["K线数据不足"])
-    logging.info("K线数据通过: %s", stats["K线数据通过"])
-    logging.info("成交量不通过: %s", stats["成交量不通过"])
-    logging.info("成交量通过: %s", stats["成交量通过"])
-    logging.info("碗型不通过: %s", stats["碗型不通过"])
-    logging.info("碗型通过: %s", stats["碗型通过"])
-    logging.info("接口异常/其他异常: %s", stats["接口异常/其他异常"])
-    logging.info("最终命中: %s", stats["最终命中"])
+    for key in keys:
+        logging.info("%s: %s", key, stats[key])
     logging.info("========== 统计结束 ==========")
 
 
@@ -1138,6 +882,7 @@ def screen_stocks(
     """执行完整筛选流程。"""
     config = config or DEFAULT_SCREEN_CONFIG
     basic_config = config["basic"]
+    is_bottom = config.get("model_type") == "bottom"
     min_market_value = float(min_market_value if min_market_value is not None else basic_config["min_market_value"])
     min_listed_days = int(min_listed_days if min_listed_days is not None else basic_config["min_listed_days"])
     min_k_days = int(min_k_days if min_k_days is not None else basic_config["min_k_days"])
@@ -1169,11 +914,16 @@ def screen_stocks(
     logging.info("排除代码前缀: %s", ",".join(basic_config.get("excluded_board_prefixes") or []) or "关闭")
     logging.info("上市时间要求: 超过 %s 天", min_listed_days)
     logging.info("上市时间过滤: %s", "启用" if enable_listing_filter else "关闭")
-    logging.info("一年趋势过滤: %s", "启用" if enable_trend_filter else "关闭")
-    logging.info("K 线数据过滤: %s", "启用" if enable_k_data_filter else "关闭")
-    logging.info("成交量过滤: %s", "启用" if basic_config.get("enable_volume_filter", True) else "关闭")
-    logging.info("碗型过滤: %s", "启用" if enable_bowl_filter else "关闭")
-    logging.info("K 线最少条数: %s，默认回看交易日: %s", min_k_days, k_lookback_days)
+    if is_bottom:
+        logging.info("K 线数据过滤: 启用")
+        logging.info("底部平台过滤: 启用")
+        logging.info("K 线最少条数: %s，默认回看交易日: %s", config["bottom"]["year_days"], trend_lookback_count)
+    else:
+        logging.info("一年趋势过滤: %s", "启用" if enable_trend_filter else "关闭")
+        logging.info("K 线数据过滤: %s", "启用" if enable_k_data_filter else "关闭")
+        logging.info("成交量过滤: %s", "启用" if basic_config.get("enable_volume_filter", True) else "关闭")
+        logging.info("碗型过滤: %s", "启用" if enable_bowl_filter else "关闭")
+        logging.info("K 线最少条数: %s，默认回看交易日: %s", min_k_days, k_lookback_days)
 
     rows: list[dict[str, Any]] = []
     stats = {
@@ -1192,6 +942,11 @@ def screen_stocks(
         "最终命中": 0,
     }
 
+    if is_bottom:
+        stats.update({"底部平台不通过": 0, "底部平台通过": 0, "横盘未突破": 0, "出现转强": 0, "长期数据未验证": 0})
+        for stage in SIDEWAYS_STAGES:
+            stats.update({f"{stage}不通过": 0, f"{stage}通过": 0})
+
     for i, item in universe.iterrows():
         symbol = normalize_symbol(item["代码"])
         name = str(item["名称"])
@@ -1208,6 +963,38 @@ def screen_stocks(
             stats["上市时间通过"] += 1
             sector = str(item.get("板块") or UNKNOWN_SECTOR).strip() or UNKNOWN_SECTOR
 
+            if is_bottom:
+                end_date = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d")
+                trend_df = fetch_bottom_k(symbol, trend_lookback_count, end_date)
+                ok, metrics = evaluate_bottom(trend_df, config)
+                insufficient_k = len(trend_df) < int(config["bottom"]["year_days"])
+                stats["K线数据不足" if insufficient_k else "K线数据通过"] += 1
+                if not ok:
+                    if not insufficient_k:
+                        stats["底部平台不通过"] += 1
+                    logging.debug("跳过 %s %s: %s", symbol, name, metrics["未通过原因"])
+                    continue
+                stats["底部平台通过"] += 1
+                if metrics["碗型阶段"] == "横盘未突破":
+                    sideways_ok, sideways_metrics = check_sideways_candidate(symbol, trend_df, listing_date, config)
+                    failed_stage = sideways_metrics.get("未通过环节")
+                    for stage in SIDEWAYS_STAGES:
+                        if stage == failed_stage:
+                            key = "长期数据未验证" if sideways_metrics.get("未验证") else f"{stage}不通过"
+                            stats[key] += 1
+                            break
+                        stats[f"{stage}通过"] += 1
+                    if not sideways_ok:
+                        logging.debug("跳过 %s %s: %s", symbol, name, sideways_metrics["未通过原因"])
+                        continue
+                    metrics.update(sideways_metrics)
+                else:
+                    metrics["规则版本"] = "bottom_v1_strength"
+                rows.append(build_result_row(item, listing_date, result_sector(symbol, sector), trend_df, metrics, False, sector_keyword))
+                stats[metrics["碗型阶段"]] += 1
+                stats["最终命中"] += 1
+                logging.info("命中: %s %s", symbol, name)
+                continue
             trend_df = fetch_recent_k(symbol, trend_lookback_count)
             trend_ok, trend_metrics = is_one_year_uptrend(trend_df, config=config)
             if enable_trend_filter and not trend_ok:
@@ -1245,7 +1032,7 @@ def screen_stocks(
                 build_result_row(
                     item,
                     listing_date,
-                    sector,
+                    result_sector(symbol, sector),
                     k_df,
                     metrics,
                     enable_bowl_filter,
@@ -1256,6 +1043,10 @@ def screen_stocks(
             logging.info("命中: %s %s", symbol, name)
 
         except Exception as exc:
+            if is_market_data_connection_error(exc):
+                raise MarketDataConnectionError(
+                    f"行情接口连接失败，任务已停止（{symbol} {name}）：{exc}"
+                ) from exc
             stats["接口异常/其他异常"] += 1
             logging.warning("跳过 %s %s: %s", symbol, name, exc)
 
@@ -1264,8 +1055,11 @@ def screen_stocks(
                 logging.info("进度: %s/%s", i + 1, len(universe))
             time.sleep(sleep_seconds)
 
-    log_filter_stats(stats)
-    return pd.DataFrame(rows)
+    log_filter_stats(stats, is_bottom=is_bottom)
+    result = pd.DataFrame(rows)
+    if is_bottom:
+        result.attrs["model_type"] = "bottom"
+    return result
 
 
 def build_default_output_path() -> str:
@@ -1288,14 +1082,15 @@ def build_run_timestamp() -> str:
 
 
 def cleanup_cache_dir() -> None:
-    """清理临时 K 线缓存，仅保留当天股票池用于网络失败时降级。"""
+    """清理临时缓存；股票池缓存仅用于审计，不能替代实时列表。"""
     if not CACHE_DIR.exists():
         return
 
-    stock_spot_cache_name = f"stock_spot_{datetime.now():%Y%m%d}.csv"
+    today_spot = today_cache_path("stock_spot")
+    preserved = {today_spot} if today_spot.exists() else set()
     removed_count = 0
     for path in CACHE_DIR.iterdir():
-        if path.is_file() and path.name != stock_spot_cache_name:
+        if path.is_file() and path not in preserved:
             path.unlink()
             removed_count += 1
 
@@ -1305,9 +1100,9 @@ def cleanup_cache_dir() -> None:
         pass
 
     logging.info(
-        "已清理缓存文件 %s 个，保留当日股票池缓存 %s",
+        "已清理缓存文件 %s 个，保留当日股票池审计缓存 %s 个",
         removed_count,
-        stock_spot_cache_name,
+        len(preserved),
     )
 
 
@@ -1358,7 +1153,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--use-proxy",
         action="store_true",
-        help="使用当前终端的 HTTP/HTTPS 代理环境变量；默认会清除代理以避免东方财富接口连接失败",
+        help="让行情接口也使用当前终端的 HTTP/HTTPS 代理",
+    )
+    parser.add_argument(
+        "--no-proxy",
+        action="store_true",
+        help="忽略当前终端的 HTTP/HTTPS 代理环境变量",
     )
     return parser.parse_args()
 
@@ -1372,10 +1172,11 @@ def run_screening(
     sector_keyword: str | None = None,
     sleep_seconds: float = SLEEP_SECONDS,
     enable_bowl_filter: bool | None = None,
-    use_proxy: bool = False,
+    use_proxy: bool | None = None,
 ) -> pd.DataFrame:
     """按指定配置执行筛选、导出 Excel，并返回结果表。"""
     configure_network(use_proxy=use_proxy)
+    logging.info("行情接口：AKShare %s", akshare_version())
     config = load_screen_config(config_path)
     if config_overrides:
         config = deep_merge_config(config, config_overrides)
@@ -1407,7 +1208,7 @@ def run_screening(
     except Exception as exc:
         logging.error("运行失败: %s", exc)
         logging.error(
-            "这通常是东方财富接口网络不稳定或本机代理导致。可稍后重试；如必须走代理，请使用 --use-proxy。"
+            "请检查 AKShare 行情接口与网络/代理配置。国内行情源默认直连；需要代理时可尝试 --use-proxy。"
         )
         raise SystemExit(1) from exc
 
@@ -1427,7 +1228,7 @@ def main() -> None:
         sector_keyword=sector_keyword,
         sleep_seconds=args.sleep,
         enable_bowl_filter=enable_bowl_filter,
-        use_proxy=args.use_proxy,
+        use_proxy=False if args.no_proxy else True if args.use_proxy else None,
     )
 
 

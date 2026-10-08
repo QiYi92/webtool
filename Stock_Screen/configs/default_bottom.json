@@ -1,0 +1,63 @@
+{
+  "model_type": "bottom",
+  "basic": {
+    "min_market_value": 10000000000,
+    "min_listed_days": 1095,
+    "min_k_days": 250,
+    "k_lookback_days": 260,
+    "trend_k_days": 250,
+    "trend_lookback_count": 260,
+    "excluded_board_prefixes": [
+      "300",
+      "301",
+      "302",
+      "688",
+      "689"
+    ],
+    "sector_keyword": null,
+    "enable_listing_filter": true,
+    "enable_trend_filter": false,
+    "enable_k_data_filter": true,
+    "enable_bowl_filter": false,
+    "enable_volume_filter": false
+  },
+  "bottom": {
+    "year_days": 250,
+    "platform_days": 40,
+    "signal_days": 5,
+    "max_year_position": 0.3,
+    "min_drawdown": 0.2,
+    "max_platform_amplitude": 0.18,
+    "max_close_amplitude": 0.12,
+    "max_abs_slope": 0.06,
+    "min_support_ratio": 0.97,
+    "min_signal_support_ratio": 0.98,
+    "max_bottom_ratio": 1.15,
+    "strength_quantile": 0.8,
+    "strength_volume_ratio": 1.2,
+    "strength_min_gain": 0.02,
+    "strength_max_gain": 0.1
+  },
+  "sideways": {
+    "version": "sideways_v2",
+    "history_years": 5,
+    "min_history_bars": 1100,
+    "start_tolerance_days": 10,
+    "max_price_percentile": 0.2,
+    "max_q10_ratio": 1.15,
+    "max_median_ratio": 0.85,
+    "max_platform_amplitude": 0.12,
+    "max_close_amplitude": 0.08,
+    "max_abs_slope": 0.03,
+    "min_support_ratio": 0.98,
+    "min_signal_support_ratio": 0.99,
+    "max_bottom_ratio": 1.08,
+    "max_ceiling_ratio": 1.01,
+    "max_turnover_ratio": 0.7,
+    "min_turnover_median": 0.001,
+    "max_turnover_median": 0.01,
+    "max_daily_turnover": 0.03,
+    "max_turnover_expansion": 1.3,
+    "min_amount_median": 20000000
+  }
+}

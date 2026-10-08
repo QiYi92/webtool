@@ -353,6 +353,7 @@ def _load_screen_module() -> Any:
 
 def build_filter_config_overrides(
     filters: dict[str, bool] | None,
+    strategy: str | None = None,
 ) -> dict[str, dict[str, Any]]:
     settings = {**DEFAULT_FILTER_SETTINGS, **(filters or {})}
     excluded_board_prefixes: list[str] = []
@@ -360,6 +361,9 @@ def build_filter_config_overrides(
         excluded_board_prefixes.extend(["300", "301", "302"])
     if settings["exclude_star_market"]:
         excluded_board_prefixes.extend(["688", "689"])
+    if strategy == "default_bottom":
+        return {"basic": {"excluded_board_prefixes": excluded_board_prefixes,
+                          "enable_listing_filter": settings["exclude_insufficient_listing"]}}
     return {
         "basic": {
             "excluded_board_prefixes": excluded_board_prefixes,
@@ -493,7 +497,7 @@ class PredictionTaskManager:
             enabled_filters = [
                 FILTER_SETTING_LABELS[name]
                 for name, enabled in filters.items()
-                if enabled
+                if enabled and (strategy != "default_bottom" or name in ("exclude_gem", "exclude_star_market", "exclude_insufficient_listing"))
             ]
             task_logger.info(
                 "启用筛选项：%s",
@@ -503,7 +507,7 @@ class PredictionTaskManager:
             output_path = DATA_DIR / f"{task_id}.xlsx"
             result = module.run_screening(
                 config_path=str(strategy_path),
-                config_overrides=build_filter_config_overrides(filters),
+                config_overrides=build_filter_config_overrides(filters, strategy),
                 output=str(output_path),
             )
             rows = _result_rows(result)

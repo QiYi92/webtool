@@ -18,6 +18,7 @@ from app.services.investment_prediction_scheduler import (
     shutdown_prediction_scheduler,
     start_prediction_scheduler,
 )
+from app.services.akshare_update_service import on_backend_startup
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,6 +50,7 @@ app.include_router(investment_prediction_router)
 
 @app.on_event("startup")
 def on_startup() -> None:
+    on_backend_startup()
     start_on_startup()
     start_prediction_scheduler()
 

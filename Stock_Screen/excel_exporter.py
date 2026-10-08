@@ -105,7 +105,7 @@ def write_sector_summary_sheet(ws, df: pd.DataFrame) -> None:
 def write_bowl_stage_sheets(wb: Workbook, df: pd.DataFrame) -> None:
     """按碗型阶段拆分工作表，便于直接查看不同启动类型。"""
     stage_column = "碗型阶段"
-    stages = ("右侧萌芽", "早期启动")
+    stages = ("横盘未突破", "出现转强") if df.attrs.get("model_type") == "bottom" else ("右侧萌芽", "早期启动")
 
     for stage in stages:
         ws = wb.create_sheet(stage)
@@ -176,4 +176,10 @@ def export_sector_summary_excel(
     write_sector_summary_sheet(ws, df)
     write_bowl_stage_sheets(wb, df)
     write_run_record_sheet(wb, df, started_at=started_at, finished_at=finished_at)
+    if df.attrs.get("model_type") == "bottom":
+        detail = wb.create_sheet("模型指标")
+        detail.append(list(df.columns) or ["无命中结果"])
+        for row in df.itertuples(index=False, name=None):
+            detail.append([None if pd.isna(value) else value for value in row])
+        style_worksheet(detail)
     wb.save(output)

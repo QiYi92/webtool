@@ -57,6 +57,17 @@ type StatusResponse = {
   error_message: string | null;
 };
 
+type MarketDataStatus = {
+  installed_version: string;
+  latest_version: string | null;
+  last_checked_at: string | null;
+  interface_status: string;
+  interface_checked_at?: string | null;
+  upgrade_status: string;
+  candidate_version: string | null;
+  last_error: string | null;
+};
+
 type LogResponse = {
   task_id: string;
   content: string;
@@ -180,6 +191,8 @@ export default function InvestmentPredictionPage() {
     strategy: null,
     error_message: null
   });
+  const [marketDataStatus, setMarketDataStatus] = useState<MarketDataStatus | null>(null);
+  const [marketDataStatusError, setMarketDataStatusError] = useState(false);
   const [logContent, setLogContent] = useState("");
   const [results, setResults] = useState<PredictionResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,6 +308,18 @@ export default function InvestmentPredictionPage() {
     return status;
   }, [loadTaskContent]);
 
+  const refreshMarketDataStatus = useCallback(async () => {
+    try {
+      setMarketDataStatus(
+        await fetchJSON<MarketDataStatus>("/tools/investment-prediction/market-data/status")
+      );
+      setMarketDataStatusError(false);
+    } catch {
+      setMarketDataStatus(null);
+      setMarketDataStatusError(true);
+    }
+  }, []);
+
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
@@ -310,6 +335,7 @@ export default function InvestmentPredictionPage() {
             () => DEFAULT_SCHEDULE_SETTINGS
           ),
           refreshStatus(),
+          refreshMarketDataStatus(),
           loadHistory(1)
         ]);
         setScheduleSettings(schedule);
@@ -321,7 +347,12 @@ export default function InvestmentPredictionPage() {
       }
     };
     initialize();
-  }, [refreshStatus]);
+  }, [refreshMarketDataStatus, refreshStatus]);
+
+  useEffect(() => {
+    const timer = window.setInterval(refreshMarketDataStatus, 60_000);
+    return () => window.clearInterval(timer);
+  }, [refreshMarketDataStatus]);
 
   useEffect(() => {
     if (statusData.status !== "running") return;
@@ -587,7 +618,7 @@ export default function InvestmentPredictionPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-900">投资走势预测</h1>
           <p className="text-sm text-slate-500">
-            选择碗形策略，筛选符合走势特征的 A 股标的。
+            选择预测策略，筛选符合走势特征的 A 股标的。
           </p>
         </div>
 
@@ -595,12 +626,44 @@ export default function InvestmentPredictionPage() {
           <CardHeader className="pb-4">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
               <div>
-                <CardTitle>碗形预测</CardTitle>
+                <CardTitle>模型预测</CardTitle>
                 <CardDescription>
                   左侧实时显示执行日志，右侧展示最近一次任务的命中结果。
                 </CardDescription>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col items-end gap-2">
+                <div
+                  className="max-w-full text-right text-xs text-slate-500"
+                  title={marketDataStatus?.last_error ?? undefined}
+                  aria-live="polite"
+                >
+                  {marketDataStatus ? (
+                    <>
+                      <span className="font-medium text-slate-700">
+                        AKShare {marketDataStatus.installed_version}
+                      </span>
+                      {marketDataStatus.latest_version ? (
+                        <span> · 最新 {marketDataStatus.latest_version}</span>
+                      ) : null}
+                      <span> · 接口{marketDataStatus.interface_status}</span>
+                      <span>
+                        {marketDataStatus.last_checked_at
+                          ? ` · 检查于 ${formatDateTime(marketDataStatus.last_checked_at)}`
+                          : " · 尚未检查"}
+                      </span>
+                      {marketDataStatus.candidate_version ? (
+                        <span className="text-amber-700">
+                          {` · ${marketDataStatus.upgrade_status}（${marketDataStatus.candidate_version}）`}
+                        </span>
+                      ) : marketDataStatus.upgrade_status !== "已是最新版本" &&
+                        marketDataStatus.upgrade_status !== "无待升级版本" &&
+                        marketDataStatus.upgrade_status !== "已激活" ? (
+                        <span className="text-amber-700"> · {marketDataStatus.upgrade_status}</span>
+                      ) : null}
+                    </>
+                  ) : marketDataStatusError ? "AKShare 状态暂不可用" : "AKShare 状态加载中…"}
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
                 <Select
                   value={selectedStrategy}
                   onValueChange={setSelectedStrategy}
@@ -612,7 +675,7 @@ export default function InvestmentPredictionPage() {
                   <SelectContent>
                     {strategies.map((strategy) => (
                       <SelectItem key={strategy} value={strategy}>
-                        {strategy}
+                        {strategy === "default_bowl_v2" ? "找碗底模型" : strategy === "default_bottom" ? "找底部模型" : strategy}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -650,6 +713,7 @@ export default function InvestmentPredictionPage() {
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -911,7 +975,7 @@ export default function InvestmentPredictionPage() {
                           <TableHead>股票代码</TableHead>
                           <TableHead>股票名称</TableHead>
                           <TableHead>股票分类</TableHead>
-                          <TableHead>碗形阶段</TableHead>
+                          <TableHead>阶段类型</TableHead>
                           <TableHead>板块</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -996,11 +1060,13 @@ export default function InvestmentPredictionPage() {
                     <DialogHeader>
                       <DialogTitle>预测筛选设置</DialogTitle>
                       <DialogDescription>
-                        勾选本次预测需要执行的排除条件；取消勾选后，该条件将不再拦截股票。
+                        {selectedStrategy === "default_bottom"
+                          ? "可调整板块及上市时间条件；找底部模型的数据完整性和低位平台条件始终执行。"
+                          : "勾选本次预测需要执行的排除条件；取消勾选后，该条件将不再拦截股票。"}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-2">
-                      {FILTER_OPTIONS.map((option) => (
+                      {FILTER_OPTIONS.filter((option) => selectedStrategy !== "default_bottom" || ["exclude_gem", "exclude_star_market", "exclude_insufficient_listing"].includes(option.key)).map((option) => (
                         <label
                           key={option.key}
                           className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-50"
